@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
 from django.db import transaction
-from django.utils import timezone 
+from django.utils import timezone 
 from datetime import date, datetime
 from decimal import Decimal
 from django.db.models import Q
@@ -12,10 +12,10 @@ from django.core.exceptions import ObjectDoesNotExist
 # Importa Modelos
 from clientes.models import Cliente, CashbackMovimento, Divida
 from financeiro.models import FormaPagamento, Movimentacao, Categoria
-from .models import Venda, Produto 
+from .models import Venda, Produto 
 
 # Taxa de Cashback (3%)
-TAXA_CASHBACK = Decimal('0.03') 
+TAXA_CASHBACK = Decimal('0.03') 
 
 # ===================================================================
 # FUNÇÕES HELPERS DE SALVAMENTO (Processam o POST)
@@ -24,16 +24,15 @@ TAXA_CASHBACK = Decimal('0.03')
 def salvar_venda(request):
     """ Processa o POST do formulário de Entrada (Venda). """
     try:
-        # 1. Coleta de Dados
-        # CRÍTICO: Usa .strip() para remover espaços e verifica se a string não está vazia.
+        # 1. Coleta de Dados (Com tratamento de string vazia)
         cliente_id = request.POST.get('cliente', '').strip() 
         data_venda_str = request.POST.get('data_venda')
         
-        # CRÍTICO: Garante que os valores monetários não sejam None
         valor_total = Decimal(request.POST.get('valor_total', '0.00') or '0.00')
         valor_cashback_utilizado = Decimal(request.POST.get('valor_cashback_utilizado', '0.00') or '0.00')
         
-        forma_pagamento_id = request.POST.get('forma_pagamento')
+        # CRÍTICO: Forma de pagamento é obrigatória
+        forma_pagamento_id = request.POST.get('forma_pagamento', '').strip() 
         status_pagamento = request.POST.get('status_pagamento')
         data_vencimento = request.POST.get('data_vencimento')
 
@@ -42,7 +41,6 @@ def salvar_venda(request):
              raise ValueError("O Valor Total da Venda deve ser maior que zero.")
         if not forma_pagamento_id:
              raise ValueError("A Forma de Pagamento é obrigatória e não foi selecionada.")
-
 
         # Converte data_venda
         data_venda = datetime.strptime(data_venda_str, '%Y-%m-%dT%H:%M').astimezone(timezone.get_current_timezone()) if data_venda_str else timezone.now()
@@ -62,7 +60,7 @@ def salvar_venda(request):
             
             # 3. CRIAÇÃO DA MOVIMENTAÇÃO FINANCEIRA (ENTRADA)
             try:
-                categoria_venda = Categoria.objects.get(nome='VENDAS', tipo='E')  # Assumindo UPPERCASE
+                categoria_venda = Categoria.objects.get(nome='VENDAS', tipo='E')
             except ObjectDoesNotExist:
                 categoria_venda = Categoria.objects.create(nome='VENDAS', tipo='E') 
 
@@ -100,11 +98,9 @@ def salvar_venda(request):
         return redirect('dashboard')
             
     except ValueError as e:
-        # Captura erros de validação customizada (Valor <= 0, Forma de Pgto Ausente)
-        print(f"ERRO DE VALIDAÇÃO: {e}")
+        print(f"ERRO DE VALIDAÇÃO (Campos): {e}")
         return redirect('vendas_lancar') 
     except ObjectDoesNotExist as e:
-        # Captura erros se o Cliente ou FormaPagamento não for encontrado
         print(f"ERRO DE OBJETO NÃO ENCONTRADO: {e}")
         return redirect('vendas_lancar') 
     except Exception as e:
@@ -117,8 +113,8 @@ def salvar_saida(request):
         # 1. Coleta de Dados 
         valor = Decimal(request.POST.get('valor_saida', '0.00') or '0.00')
         descricao = request.POST.get('descricao_saida')
-        categoria_id = request.POST.get('categoria_saida')
-        forma_pagamento_id = request.POST.get('forma_pagamento_saida')
+        categoria_id = request.POST.get('categoria_saida', '').strip()
+        forma_pagamento_id = request.POST.get('forma_pagamento_saida', '').strip()
         status = request.POST.get('status_saida')
         data_vencimento = request.POST.get('data_vencimento_saida')
         data_lancamento_str = request.POST.get('data_lancamento_saida')
