@@ -1,4 +1,4 @@
-# financeiro/views.py (Corrigido)
+# financeiro/views.py
 from django.shortcuts import render
 from vendas.models import Venda
 from financeiro.models import Movimentacao, Categoria
@@ -7,11 +7,24 @@ from django.db.models.functions import TruncMonth
 from datetime import date, timedelta
 import calendar
 from django.db.models import F
-from decimal import Decimal # ⭐️ IMPORTAR DECIMAL
 
 # ===================================================================
 # 1. VIEW DE LANÇAMENTO DE SAÍDAS (GASTOS)
-# ... (código inalterado)
+# URL Name: 'saidas_lancar'
+# ===================================================================
+def lancamento_saidas_view(request):
+    """
+    Renderiza o formulário para registrar uma saída de caixa.
+    (Aqui a lógica de POST para salvar a movimentação de Saída será implementada)
+    """
+    # Você precisará passar as categorias de Saída para o formulário
+    # from .models import Categoria 
+    # categorias = Categoria.objects.filter(tipo='S') 
+    
+    context = {
+        # 'categorias': categorias
+    }
+    return render(request, 'financeiro/lancamento_saidas.html', context)
 
 # ===================================================================
 # 2. VIEW DE RELATÓRIOS MENSAIS (RELATORIOS DETALHADOS)
