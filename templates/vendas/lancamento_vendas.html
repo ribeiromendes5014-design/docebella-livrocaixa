@@ -212,7 +212,7 @@
 
     // Outros elementos (exigidos no seu código original)
     // NOTE: Se 'btnSalvarCliente' estiver dentro do modal, ele só será acessível após o DOM ser carregado.
-    const btnSalvarCliente = document.getElementById('btnSalvarCliente');
+    // Vamos usar a constante do Modal
     const modalCadastroRapido = new bootstrap.Modal(document.getElementById('modalCadastroRapido'));
 
     // --- REGRAS DE NEGÓCIO ---
@@ -221,7 +221,7 @@
     let debounceTimer;
 
     // =============================================================
-    // ⭐️ START: VARIÁVEIS E FUNÇÕES DE REQUIRED (CORRIGIDO O POSICIONAMENTO)
+    // ⭐️ START: VARIÁVEIS E FUNÇÕES DE REQUIRED
     // =============================================================
 
     const requiredEntradaFields = [
@@ -255,7 +255,7 @@
 
 
     // =============================================================
-    // FUNÇÕES DE BUSCA E FEEDBACK DO CLIENTE (AJAX)
+    // FUNÇÕES DE BUSCA E CADASTRO (AJAX)
     // =============================================================
     
     function updateClientFeedback(data, query) {
@@ -323,8 +323,80 @@
             updateClientFeedback({}, query);
         });
     }
-    
-    // ... (FUNÇÕES DE CÁLCULO DE ENTRADA E RESGATE) ...
+
+    function salvarClienteRapido(event) {
+        // ⭐️ CRÍTICO: Previne o envio padrão do formulário
+        event.preventDefault(); 
+        
+        const form = document.getElementById('formCadastroRapidoCliente');
+        const formData = new FormData(form);
+        const feedbackDiv = document.getElementById('cadastro-feedback');
+
+        // 1. Obtém o token CSRF
+        const csrfToken = formData.get('csrfmiddlewaretoken');
+        
+        // 2. Limpa o feedback
+        if(feedbackDiv) {
+            feedbackDiv.style.display = 'none';
+            feedbackDiv.textContent = '';
+        }
+
+        // 3. Envia os dados via Fetch API
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                // Tentativa de ler o erro JSON do Django ou mostrar erro genérico
+                return response.json().then(err => { throw new Error(err.erro || `Erro HTTP ${response.status}`); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.sucesso) {
+                alert(`Cliente ${data.nome} cadastrado com sucesso!`);
+                
+                // 4. Preenche os campos do formulário principal
+                clienteHidden.value = data.id;
+                clienteInput.value = data.nome;
+
+                // 5. Fecha o modal do Bootstrap
+                modalCadastroRapido.hide();
+
+                // 6. Atualiza o painel de feedback da busca (simulando uma busca de sucesso)
+                updateClientFeedback({
+                    cliente_encontrado: true,
+                    id: data.id,
+                    nome: data.nome,
+                    cashback: data.saldo_cashback, 
+                    divida: data.divida_total     
+                }, data.nome);
+                
+            } else {
+                // Exibe erro de validação do lado do servidor (se não for erro de HTTP)
+                if(feedbackDiv) {
+                    feedbackDiv.textContent = data.erro || "Erro desconhecido no cadastro.";
+                    feedbackDiv.style.display = 'block';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erro no POST AJAX:', error);
+            if(feedbackDiv) {
+                feedbackDiv.textContent = error.message || "Erro de rede ou servidor ao cadastrar cliente.";
+                feedbackDiv.style.display = 'block';
+            }
+        });
+    }
+
+    // =============================================================
+    // FUNÇÕES DE CÁLCULO E RESGATE
+    // =============================================================
     function calcularCashbackAReceber() {
         const valorTotalVenda = parseFloat(valorTotalInput.value) || 0;
         const cashbackReceber = valorTotalVenda * TAXA_CASHBACK;
@@ -369,7 +441,6 @@
             btnSalvar.classList.remove('btn-danger');
             btnSalvar.classList.add('btn-success');
             
-            // Habilita ENTRADA e Desabilita SAÍDA
             toggleRequiredFields(requiredEntradaFields, true);
             toggleRequiredFields(requiredSaidaFields, false);
             
@@ -379,7 +450,6 @@
             btnSalvar.classList.remove('btn-success');
             btnSalvar.classList.add('btn-danger');
             
-            // Habilita SAÍDA e Desabilita ENTRADA
             toggleRequiredFields(requiredEntradaFields, false);
             toggleRequiredFields(requiredSaidaFields, true);
         }
@@ -409,18 +479,34 @@
     // Evento principal para calcular valores (Entrada)
     valorTotalInput.addEventListener('input', calcularValorFinal);
     
-    // Inicializa a página e o cálculo ao carregar
+    // Inicializa a página e o tratamento de eventos
     document.addEventListener('DOMContentLoaded', () => {
-        // Inicializa com o modo ENTRADA
+        // Inicializa o modo ENTRADA
         document.getElementById('tipo_lancamento_selector').value = 'ENTRADA';
         document.getElementById('form_entrada').style.display = 'block';
         document.getElementById('form_saida').style.display = 'none';
         
-        // CRÍTICO: Configura os campos REQUIRED na inicialização
+        // Configura os campos REQUIRED na inicialização
         toggleRequiredFields(requiredEntradaFields, true);
         toggleRequiredFields(requiredSaidaFields, false);
         
         calcularValorFinal();
+
+        // ⭐️ Adiciona o listener para o formulário de cadastro rápido
+        const formCadastro = document.getElementById('formCadastroRapidoCliente');
+        if (formCadastro) {
+            formCadastro.addEventListener('submit', salvarClienteRapido);
+        }
+
+        // ⭐️ CRÍTICO: Preenche o nome da busca no campo do modal antes de abrir
+        const modalElement = document.getElementById('modalCadastroRapido');
+        modalElement.addEventListener('show.bs.modal', function (event) {
+            const nomeDigitado = clienteInput.value;
+            const nomeCampoModal = document.getElementById('id_nome_cadastro');
+            if (nomeCampoModal && nomeDigitado) {
+                nomeCampoModal.value = nomeDigitado;
+            }
+        });
     });
 
 </script>
