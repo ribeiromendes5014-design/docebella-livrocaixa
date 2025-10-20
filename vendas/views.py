@@ -25,21 +25,34 @@ def salvar_venda(request):
     """ Processa o POST do formulário de Entrada (Venda). """
     try:
         # 1. Coleta de Dados
-        cliente_id = request.POST.get('cliente')
+        # CRÍTICO: Usa .strip() para remover espaços e verifica se a string não está vazia.
+        cliente_id = request.POST.get('cliente', '').strip() 
         data_venda_str = request.POST.get('data_venda')
         
+        # CRÍTICO: Garante que os valores monetários não sejam None
         valor_total = Decimal(request.POST.get('valor_total', '0.00') or '0.00')
         valor_cashback_utilizado = Decimal(request.POST.get('valor_cashback_utilizado', '0.00') or '0.00')
+        
         forma_pagamento_id = request.POST.get('forma_pagamento')
         status_pagamento = request.POST.get('status_pagamento')
         data_vencimento = request.POST.get('data_vencimento')
 
+        # 1b. Validações Essenciais (CRÍTICO para evitar o 'não salva')
+        if valor_total <= 0:
+             raise ValueError("O Valor Total da Venda deve ser maior que zero.")
+        if not forma_pagamento_id:
+             raise ValueError("A Forma de Pagamento é obrigatória e não foi selecionada.")
+
+
         # Converte data_venda
         data_venda = datetime.strptime(data_venda_str, '%Y-%m-%dT%H:%M').astimezone(timezone.get_current_timezone()) if data_venda_str else timezone.now()
         
-        # 2. Objetos Chave
-        cliente = Cliente.objects.get(pk=cliente_id) if cliente_id else None
-        forma_pagamento = FormaPagamento.objects.get(pk=forma_pagamento_id)
+        # 2. Objetos Chave (Busca Segura)
+        # Cliente é opcional (None se a string for vazia)
+        cliente = Cliente.objects.get(pk=cliente_id) if cliente_id else None 
+        
+        # Forma de Pgto é obrigatória
+        forma_pagamento = FormaPagamento.objects.get(pk=forma_pagamento_id) 
         
         # --- CÁLCULOS ESSENCIAIS ---
         valor_recebido_liquido = valor_total - valor_cashback_utilizado
@@ -49,7 +62,7 @@ def salvar_venda(request):
             
             # 3. CRIAÇÃO DA MOVIMENTAÇÃO FINANCEIRA (ENTRADA)
             try:
-                categoria_venda = Categoria.objects.get(nome='VENDAS', tipo='E') 
+                categoria_venda = Categoria.objects.get(nome='VENDAS', tipo='E')  # Assumindo UPPERCASE
             except ObjectDoesNotExist:
                 categoria_venda = Categoria.objects.create(nome='VENDAS', tipo='E') 
 
@@ -86,17 +99,22 @@ def salvar_venda(request):
 
         return redirect('dashboard')
             
+    except ValueError as e:
+        # Captura erros de validação customizada (Valor <= 0, Forma de Pgto Ausente)
+        print(f"ERRO DE VALIDAÇÃO: {e}")
+        return redirect('vendas_lancar') 
     except ObjectDoesNotExist as e:
-        print(f"ERRO DE CHAVE (Venda): {e}")
-        return redirect('novo_lancamento') 
+        # Captura erros se o Cliente ou FormaPagamento não for encontrado
+        print(f"ERRO DE OBJETO NÃO ENCONTRADO: {e}")
+        return redirect('vendas_lancar') 
     except Exception as e:
         print(f"ERRO GERAL AO SALVAR VENDA: {e}")
-        return redirect('novo_lancamento') 
+        return redirect('vendas_lancar') 
 
 def salvar_saida(request):
     """ Processa o POST do formulário de Saída (Gasto). """
     try:
-        # 1. Coleta de Dados (Usando nomes de campos que o form Saída deve ter)
+        # 1. Coleta de Dados 
         valor = Decimal(request.POST.get('valor_saida', '0.00') or '0.00')
         descricao = request.POST.get('descricao_saida')
         categoria_id = request.POST.get('categoria_saida')
@@ -105,8 +123,11 @@ def salvar_saida(request):
         data_vencimento = request.POST.get('data_vencimento_saida')
         data_lancamento_str = request.POST.get('data_lancamento_saida')
 
-        if valor <= 0 or not categoria_id or not forma_pagamento_id:
-             raise ValueError("Valor, Categoria e Forma de Pagamento são obrigatórios para Saída.")
+        if valor <= 0:
+             raise ValueError("Valor da Saída deve ser maior que zero.")
+        if not categoria_id or not forma_pagamento_id:
+             raise ValueError("Categoria e Forma de Pagamento são obrigatórios para Saída.")
+
 
         categoria = Categoria.objects.get(pk=categoria_id)
         forma_pagamento = FormaPagamento.objects.get(pk=forma_pagamento_id)
@@ -129,28 +150,26 @@ def salvar_saida(request):
             
     except Exception as e:
         print(f"ERRO AO SALVAR SAÍDA: {e}")
-        return redirect('novo_lancamento') 
+        return redirect('vendas_lancar') 
 
 
 # ===================================================================
-# 2. VIEW PRINCIPAL (UNIFICADA)
+# 2. VIEW PRINCIPAL (UNIFICADA - MANTÉM O NOME DA URL)
 # ===================================================================
 @require_http_methods(["GET", "POST"])
-def lancamento_vendas_view(request): # RENOMEADA AQUI
+def lancamento_vendas_view(request):
     
     if request.method == 'POST':
         tipo_lancamento = request.POST.get('tipo_lancamento') 
 
         if tipo_lancamento == 'ENTRADA':
-            # Usa o nome da URL correta para redirecionamento
-            return salvar_venda(request) 
+            return salvar_venda(request)
         
         elif tipo_lancamento == 'SAIDA':
-            # Usa o nome da URL correta para redirecionamento
             return salvar_saida(request)
             
         else:
-            return redirect('vendas_lancar') 
+            return redirect('vendas_lancar')
 
     # Lógica GET para RENDERIZAR
     elif request.method == 'GET':
@@ -163,11 +182,12 @@ def lancamento_vendas_view(request): # RENOMEADA AQUI
             'data_venda_default': data_hora_atual,
             'data_atual': data_atual
         }
-        # CORRIGIDO: Renderiza o template com o nome que EXISTE no seu projeto
-        return render(request, 'vendas/lancamento_vendas.html', context)
+        # Renderiza o template com o nome que EXISTE no seu projeto
+        return render(request, 'vendas/lancamento_vendas.html', context) 
 
-# ... (View buscar_cliente_ajax permanece abaixo, ou mova ela para o novo arquivo) ...
-
+# ===================================================================
+# 3. VIEW DE CONSULTA RÁPIDA (AJAX)
+# ===================================================================
 def buscar_cliente_ajax(request):
     """ Busca o cliente pelo ID OU nome e retorna o saldo de cashback e dívidas. """
     query = request.GET.get('query')
