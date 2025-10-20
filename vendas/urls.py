@@ -1,11 +1,11 @@
-# vendas/urls.py (Versão FINAL)
+# vendas/urls.py (Versão FINAL e CORRIGIDA)
 from django.urls import path
 from . import views
 
 urlpatterns = [
-    # O nome da URL continua 'vendas_lancar'
-    path('lancar/', views.novo_lancamento_view, name='vendas_lancar'), 
+    # O nome da URL continua 'vendas_lancar' e aponta para a View Unificada
+    path('lancar/', views.lancamento_vendas_view, name='vendas_lancar'), 
     
-    # Endpoint para consulta AJAX (permanece)
+    # URL de busca AJAX (permanece)
     path('buscar-cliente/', views.buscar_cliente_ajax, name='vendas_buscar_cliente_ajax'),
 ]
