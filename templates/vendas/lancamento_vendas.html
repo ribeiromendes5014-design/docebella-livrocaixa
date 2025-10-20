@@ -172,7 +172,48 @@
 </div>
 
 <div class="modal fade" id="modalCadastroRapido" tabindex="-1" aria-labelledby="modalCadastroRapidoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCadastroRapidoLabel">Cadastro Rápido de Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCadastroRapido">
+                    <div class="mb-3">
+                        <label for="novo_cliente_nome" class="form-label">Nome *</label>
+                        <input type="text" class="form-control" id="novo_cliente_nome" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="novo_cliente_sobrenome" class="form-label">Sobrenome</label>
+                        <input type="text" class="form-control" id="novo_cliente_sobrenome">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="novo_cliente_apelido" class="form-label">Apelido</label>
+                        <input type="text" class="form-control" id="novo_cliente_apelido">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="novo_cliente_telefone" class="form-label">Telefone</label>
+                        <input type="text" class="form-control" id="novo_cliente_telefone">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="novo_cliente_email" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="novo_cliente_email">
+                    </div>
+                    
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="btnSalvarCliente">Salvar e Selecionar</button>
+            </div>
+        </div>
     </div>
+</div>
 
 {% endblock content %} 
 
@@ -301,13 +342,130 @@
         alert(`Resgate aplicado! Valor: R$ ${valorResgate.toFixed(2)} (Limite: 50% da venda).`);
     }
 
-    // ... (O restante das funções searchClient e btnSalvarCliente do AJAX/Cadastro Rápido permanece inalterado) ...
-    // Note: Você deve incluir o código JS completo de searchClient e btnSalvarCliente aqui
+    // =============================================================
+    // FUNÇÕES DE LOOKUP E CADASTRO RÁPIDO (REINSERIDAS E NECESSÁRIAS)
+    // =============================================================
+    
+    function searchClient(query) {
+        const termoBusca = query.trim(); 
+
+        if (!termoBusca) {
+            feedbackArea.style.display = 'none';
+            novoClienteFeedback.style.display = 'none';
+            return;
+        }
+
+        // Envia o termo de busca literal (nome/ID)
+        fetch(`${searchUrl}?query=${termoBusca}`) 
+            .then(response => response.json())
+            .then(data => {
+                // ... (O restante da lógica de feedback de busca) ...
+                
+                feedbackArea.style.display = 'block';
+                novoClienteFeedback.style.display = 'none';
+                document.getElementById('opcoes-cliente').innerHTML = ''; 
+                
+                const saldoCashback = parseFloat(data.saldo_cashback || 0);
+                const dividaTotal = parseFloat(data.divida_total || 0);
+                const nomeSugerido = data.nome_sugerido || termoBusca; 
+
+                if (data.encontrado) {
+                    // CLIENTE ENCONTRADO
+                    document.getElementById('feedback-nome').textContent = data.nome;
+                    document.getElementById('feedback-cashback').textContent = `R$ ${saldoCashback.toFixed(2)}`;
+                    document.getElementById('feedback-divida').textContent = `R$ ${dividaTotal.toFixed(2)}`;
+                    clienteHidden.value = data.id; 
+
+                    // Apresenta Opções de Ação
+                    let opcoesHtml = "";
+                    if (dividaTotal > 0) {
+                        opcoesHtml += `<button type="button" class="btn btn-sm btn-danger me-2" onclick="alert('Funcionalidade de Quitar Dívida será implementada!')">Quitar Dívida (R$ ${dividaTotal.toFixed(2)})</button>`;
+                    }
+                    if (saldoCashback >= VALOR_MINIMO_RESGATE) {
+                        opcoesHtml += `<button type="button" class="btn btn-sm btn-success" onclick="resgatarCashback(${saldoCashback})">Usar Cashback</button>`;
+                    } else if (saldoCashback > 0) {
+                        opcoesHtml += `<span class="badge bg-warning text-dark">R$ ${saldoCashback.toFixed(2)} - Mínimo R$ ${VALOR_MINIMO_RESGATE.toFixed(2)}</span>`;
+                    }
+                    document.getElementById('opcoes-cliente').innerHTML = opcoesHtml;
+
+                } else {
+                    // CLIENTE NÃO ENCONTRADO (Sugere cadastro)
+                    feedbackArea.style.display = 'none';
+                    novoClienteFeedback.style.display = 'block';
+                    clienteHidden.value = '';
+                    
+                    document.getElementById('novo_cliente_nome').value = nomeSugerido; 
+                }
+            })
+            .catch(error => console.error('Erro na busca AJAX:', error));
+    }
+    
+    btnSalvarCliente.addEventListener('click', () => {
+        const nome = document.getElementById('novo_cliente_nome').value.trim();
+        
+        // COLETANDO OS DADOS DOS NOVOS CAMPOS DO MODAL
+        const sobrenome = document.getElementById('novo_cliente_sobrenome').value.trim();
+        const apelido = document.getElementById('novo_cliente_apelido').value.trim();
+        const telefone = document.getElementById('novo_cliente_telefone').value.trim();
+        const email = document.getElementById('novo_cliente_email').value.trim();
+        
+        if (!nome) {
+            alert("Por favor, digite o nome do cliente.");
+            return;
+        }
+
+        // Chamada AJAX para a view de cadastro rápido
+        const formData = new FormData();
+        formData.append('nome', nome);
+        
+        formData.append('sobrenome', sobrenome);
+        formData.append('apelido', apelido);
+        formData.append('telefone', telefone);
+        formData.append('email', email);
+
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        fetch(cadastroUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.sucesso) {
+                alert(`Cliente ${data.nome} cadastrado com sucesso!`);
+                modalCadastroRapido.hide();
+
+                searchClient(data.id); 
+                
+                // Limpa os campos do modal para o próximo uso
+                document.getElementById('novo_cliente_nome').value = ''; 
+                document.getElementById('novo_cliente_sobrenome').value = '';
+                document.getElementById('novo_cliente_apelido').value = '';
+                document.getElementById('novo_cliente_telefone').value = '';
+                document.getElementById('novo_cliente_email').value = '';
+                
+            } else {
+                alert(`Falha no cadastro: ${data.mensagem}`);
+            }
+        })
+        .catch(error => console.error("Erro de comunicação com o servidor:", error));
+    });
 
     // =============================================================
     // INICIALIZAÇÃO E EVENTOS
     // =============================================================
 
+    // Evento de Debounce no campo de Cliente
+    clienteInput.addEventListener('input', (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            searchClient(e.target.value);
+        }, 500); 
+    });
+
+    // Evento principal para calcular valores
+    valorTotalInput.addEventListener('input', calcularValorFinal);
+    
     // Inicializa a página e o cálculo ao carregar
     document.addEventListener('DOMContentLoaded', () => {
         // Inicializa com o modo ENTRADA
