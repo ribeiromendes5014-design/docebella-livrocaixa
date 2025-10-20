@@ -12,10 +12,10 @@ from django.core.exceptions import ObjectDoesNotExist
 # Importa Modelos
 from clientes.models import Cliente, CashbackMovimento, Divida
 from financeiro.models import FormaPagamento, Movimentacao, Categoria
-from .models import Venda, Produto 
+from .models import Venda, Produto
 
 # Taxa de Cashback (3%)
-TAXA_CASHBACK = Decimal('0.03') 
+TAXA_CASHBACK = Decimal('0.03')
 
 # ===================================================================
 # FUNÇÕES HELPERS DE SALVAMENTO (Processam o POST)
