@@ -1,4 +1,5 @@
-# vendas/views.py
+# vendas/views.py (Corrigido para a função AJAX)
+
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
@@ -19,6 +20,7 @@ TAXA_CASHBACK = Decimal('0.03')
 
 # ===================================================================
 # FUNÇÕES HELPERS DE SALVAMENTO (Processam o POST)
+# (Mantidas inalteradas, focando na correção do AJAX)
 # ===================================================================
 
 def salvar_venda(request):
@@ -38,9 +40,9 @@ def salvar_venda(request):
 
         # 1b. Validações Essenciais (CRÍTICO para evitar o 'não salva')
         if valor_total <= 0:
-             raise ValueError("O Valor Total da Venda deve ser maior que zero.")
+              raise ValueError("O Valor Total da Venda deve ser maior que zero.")
         if not forma_pagamento_id:
-             raise ValueError("A Forma de Pagamento é obrigatória e não foi selecionada.")
+              raise ValueError("A Forma de Pagamento é obrigatória e não foi selecionada.")
 
         # Converte data_venda
         data_venda = datetime.strptime(data_venda_str, '%Y-%m-%dT%H:%M').astimezone(timezone.get_current_timezone()) if data_venda_str else timezone.now()
@@ -120,9 +122,9 @@ def salvar_saida(request):
         data_lancamento_str = request.POST.get('data_lancamento_saida')
 
         if valor <= 0:
-             raise ValueError("Valor da Saída deve ser maior que zero.")
+              raise ValueError("Valor da Saída deve ser maior que zero.")
         if not categoria_id or not forma_pagamento_id:
-             raise ValueError("Categoria e Forma de Pagamento são obrigatórios para Saída.")
+              raise ValueError("Categoria e Forma de Pagamento são obrigatórios para Saída.")
 
 
         categoria = Categoria.objects.get(pk=categoria_id)
@@ -182,47 +184,60 @@ def lancamento_vendas_view(request):
         return render(request, 'vendas/lancamento_vendas.html', context) 
 
 # ===================================================================
-# 3. VIEW DE CONSULTA RÁPIDA (AJAX)
+# 3. VIEW DE CONSULTA RÁPIDA (AJAX) - CORRIGIDA
 # ===================================================================
 def buscar_cliente_ajax(request):
     """ Busca o cliente pelo ID OU nome e retorna o saldo de cashback e dívidas. """
-    query = request.GET.get('query', '').strip() # Limpeza da query
+    # Mudei de 'query' para 'q' que é mais comum e consistente com o seu front
+    query = request.GET.get('q', '').strip() 
     
+    # Adicionando uma verificação mínima para evitar buscas vazias
+    if not query or len(query) < 1:
+        return JsonResponse({'cliente_encontrado': False})
+        
     # 1. Busca por ID (Prioridade Máxima)
     if query.isdigit():
         try:
             cliente = Cliente.objects.get(pk=query)
+            # CORRIGIDO: Chave 'cliente_encontrado' para compatibilidade com o JS
             return JsonResponse({
-                'encontrado': True,
+                'cliente_encontrado': True,
                 'id': cliente.id,
                 'nome': str(cliente),
-                'saldo_cashback': float(cliente.saldo_cashback),
-                'divida_total': float(cliente.divida_total),
+                # CRÍTICO: Conversão de Decimal para float() para serialização JSON
+                'cashback': float(cliente.saldo_cashback),
+                'divida': float(cliente.divida_total),
             })
         except Cliente.DoesNotExist:
             pass # Continua a busca por nome se o ID não for encontrado
 
     # 2. Busca por Nome (Exata e Parcial)
-    # Sempre buscar uma lista para sugestão
+    
     clientes_encontrados = Cliente.objects.filter(
         Q(nome__icontains=query) | Q(apelido__icontains=query)
     ).order_by('nome')[:10] # Limita a 10 resultados para não sobrecarregar
     
     if clientes_encontrados.exists():
-        # Se for um único cliente, retorna os detalhes (comportamento atual)
+        # Se for um único cliente, retorna os detalhes (comportamento para preenchimento)
         if len(clientes_encontrados) == 1:
             cliente = clientes_encontrados.first()
             data = {
-                'encontrado': True,
+                # CORRIGIDO: Chave 'cliente_encontrado'
+                'cliente_encontrado': True,
                 'id': cliente.id,
                 'nome': str(cliente),
-                'saldo_cashback': float(cliente.saldo_cashback),
-                'divida_total': float(cliente.divida_total),
+                # CRÍTICO: Conversão de Decimal para float()
+                'cashback': float(cliente.saldo_cashback),
+                'divida': float(cliente.divida_total),
             }
         else:
-            # Se for uma lista de sugestões, retorna uma lista (novo comportamento)
+            # Se for uma lista de sugestões (mais de um resultado), retorna a lista.
+            # O JS do front precisaria ser aprimorado para lidar com 'sugestoes'
+            # No entanto, para o comportamento de "encontrou um" vs "não encontrou", 
+            # esta resposta indica que ALGO foi encontrado.
             data = {
-                'encontrado': True,
+                # CORRIGIDO: Chave 'cliente_encontrado'
+                'cliente_encontrado': True,
                 'sugestoes': [
                     {'id': c.id, 'nome': str(c)} for c in clientes_encontrados
                 ]
@@ -230,7 +245,8 @@ def buscar_cliente_ajax(request):
     else:
         # Não encontrou
         data = {
-            'encontrado': False,
+            # CORRIGIDO: Chave 'cliente_encontrado'
+            'cliente_encontrado': False,
             'mensagem': 'Cliente não encontrado. Deseja cadastrar agora?',
             'nome_sugerido': query
         }
