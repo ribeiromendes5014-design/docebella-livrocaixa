@@ -16,7 +16,7 @@
             </select>
         </div>
         
-        <form id="formUnificado" method="POST" action="{% url 'novo_lancamento' %}">
+        <form id="formUnificado" method="POST" action="{% url 'vendas_lancar' %}">
             {% csrf_token %}
             <input type="hidden" name="tipo_lancamento" id="tipo_lancamento_hidden" value="ENTRADA"> 
 
@@ -108,7 +108,7 @@
             </div>
             
             <div id="form_saida" style="display:none;">
-                <h3 class="mb-3">Detalhes do Gasto</h3>
+                <h3 class="mb-3 text-danger">Detalhes do Gasto</h3>
 
                 <div class="card mb-3">
                     <div class="card-header bg-danger text-white">Informações da Saída</div>
@@ -228,11 +228,13 @@
             formSaida.style.display = 'none';
             btnSalvar.classList.remove('btn-danger');
             btnSalvar.classList.add('btn-success');
+            btnSalvar.textContent = 'Finalizar e Lançar Venda';
         } else { // SAIDA
             formEntrada.style.display = 'none';
             formSaida.style.display = 'block';
             btnSalvar.classList.remove('btn-success');
             btnSalvar.classList.add('btn-danger');
+            btnSalvar.textContent = 'Registrar Saída';
         }
     });
 
@@ -300,28 +302,18 @@
     }
 
     // ... (O restante das funções searchClient e btnSalvarCliente do AJAX/Cadastro Rápido permanece inalterado) ...
+    // Note: Você deve incluir o código JS completo de searchClient e btnSalvarCliente aqui
 
     // =============================================================
     // INICIALIZAÇÃO E EVENTOS
     // =============================================================
 
-    // Evento de Debounce no campo de Cliente (Entrada)
-    clienteInput.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            searchClient(e.target.value);
-        }, 500); 
-    });
-
-    // Evento principal para calcular valores (Entrada)
-    valorTotalInput.addEventListener('input', calcularValorFinal);
-    
     // Inicializa a página e o cálculo ao carregar
     document.addEventListener('DOMContentLoaded', () => {
         // Inicializa com o modo ENTRADA
-        document.getElementById('tipo_lancamento_selector').value = 'ENTRADA';
-        document.getElementById('form_entrada').style.display = 'block';
-        document.getElementById('form_saida').style.display = 'none';
+        selector.value = 'ENTRADA';
+        formEntrada.style.display = 'block';
+        formSaida.style.display = 'none';
 
         calcularValorFinal();
     });
