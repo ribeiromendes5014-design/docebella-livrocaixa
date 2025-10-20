@@ -1,4 +1,4 @@
-# vendas/urls.py (NÃO PRECISA DE ALTERAÇÃO - APENAS GARANTIR QUE APONTE PARA A NOVA VIEW)
+# vendas/urls.py (Versão FINAL)
 from django.urls import path
 from . import views
 
