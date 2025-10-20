@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
 from django.db import transaction
-from django.utils import timezone 
+from django.utils import timezone
 from datetime import date, datetime
 from decimal import Decimal
 from django.db.models import Q
