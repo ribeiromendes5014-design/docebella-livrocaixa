@@ -21,7 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # O código de URL foi removido daqui!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-chave-de-desenvolvimento-insegura')
 DEBUG = True # Forçamos True para facilitar o desenvolvimento local
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = os.environ.get(
+    'ALLOWED_HOSTS', 
+    '127.0.0.1,localhost,docebella-livrocaixa.onrender.com' # <--- Adicionado aqui
+).split(',')
 
 # ==============================================================================
 # DEFINIÇÃO DA APLICAÇÃO
