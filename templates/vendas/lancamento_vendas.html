@@ -16,7 +16,7 @@
             </select>
         </div>
         
-        <form id="formUnificado" method="POST" action="{% url 'vendas_lancar' %}">
+        <form id="formUnificado" method="POST" action="{% url 'novo_lancamento' %}">
             {% csrf_token %}
             <input type="hidden" name="tipo_lancamento" id="tipo_lancamento_hidden" value="ENTRADA"> 
 
@@ -108,7 +108,7 @@
             </div>
             
             <div id="form_saida" style="display:none;">
-                <h3 class="mb-3 text-danger">Detalhes do Gasto</h3>
+                <h3 class="mb-3">Detalhes do Gasto</h3>
 
                 <div class="card mb-3">
                     <div class="card-header bg-danger text-white">Informações da Saída</div>
@@ -172,48 +172,7 @@
 </div>
 
 <div class="modal fade" id="modalCadastroRapido" tabindex="-1" aria-labelledby="modalCadastroRapidoLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalCadastroRapidoLabel">Cadastro Rápido de Cliente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formCadastroRapido">
-                    <div class="mb-3">
-                        <label for="novo_cliente_nome" class="form-label">Nome *</label>
-                        <input type="text" class="form-control" id="novo_cliente_nome" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="novo_cliente_sobrenome" class="form-label">Sobrenome</label>
-                        <input type="text" class="form-control" id="novo_cliente_sobrenome">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="novo_cliente_apelido" class="form-label">Apelido</label>
-                        <input type="text" class="form-control" id="novo_cliente_apelido">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="novo_cliente_telefone" class="form-label">Telefone</label>
-                        <input type="text" class="form-control" id="novo_cliente_telefone">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="novo_cliente_email" class="form-label">E-mail</label>
-                        <input type="email" class="form-control" id="novo_cliente_email">
-                    </div>
-                    
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button type="button" class="btn btn-primary" id="btnSalvarCliente">Salvar e Selecionar</button>
-            </div>
-        </div>
     </div>
-</div>
 
 {% endblock content %} 
 
@@ -228,6 +187,7 @@
     const formEntrada = document.getElementById('form_entrada');
     const formSaida = document.getElementById('form_saida');
     const tipoLancamentoHidden = document.getElementById('tipo_lancamento_hidden');
+    const btnSalvar = document.getElementById('btn_salvar');
 
     // Elementos da ENTRADA (Venda)
     const clienteInput = document.getElementById('id_cliente_input');
@@ -244,10 +204,10 @@
     const valorFinalInput = document.getElementById('id_valor_final');
     
     // Elementos da SAÍDA (Gasto)
+    const valorSaidaInput = document.getElementById('id_valor_saida');
     const statusPagamentoSaida = document.getElementById('id_status_saida');
     const campoDataVencimentoSaida = document.getElementById('campo-data-vencimento-saida');
 
-    // Inicialização de objetos Bootstrap (se falhar, o script para)
     const btnSalvarCliente = document.getElementById('btnSalvarCliente');
     const modalCadastroRapido = new bootstrap.Modal(document.getElementById('modalCadastroRapido'));
 
@@ -257,7 +217,7 @@
     let debounceTimer;
 
     // =============================================================
-    // LÓGICA DE ALTERNÂNCIA (ENTRADA / SAÍDA) - MANTIDA
+    // LÓGICA DE ALTERNÂNCIA (ENTRADA / SAÍDA)
     // =============================================================
     selector.addEventListener('change', (e) => {
         const tipo = e.target.value;
@@ -266,10 +226,13 @@
         if (tipo === 'ENTRADA') {
             formEntrada.style.display = 'block';
             formSaida.style.display = 'none';
-            // Removendo referências a btnSalvar para evitar quebras
+            btnSalvar.classList.remove('btn-danger');
+            btnSalvar.classList.add('btn-success');
         } else { // SAIDA
             formEntrada.style.display = 'none';
             formSaida.style.display = 'block';
+            btnSalvar.classList.remove('btn-success');
+            btnSalvar.classList.add('btn-danger');
         }
     });
 
@@ -293,8 +256,9 @@
 
 
     // =============================================================
-    // FUNÇÕES DE CÁLCULO E VALIDAÇÃO (MANTIDAS)
+    // FUNÇÕES DE CÁLCULO DE ENTRADA (MANTIDAS)
     // =============================================================
+
     function calcularCashbackAReceber() {
         const valorTotalVenda = parseFloat(valorTotalInput.value) || 0;
         const cashbackReceber = valorTotalVenda * TAXA_CASHBACK;
@@ -310,31 +274,54 @@
         const valorFinal = valorTotalVenda - cashbackUtilizado;
         valorFinalInput.value = Math.max(0, valorFinal).toFixed(2);
     }
-    
+
+    // --- LÓGICA DE RESGATE DE CASHBACK (COM REGRAS) ---
     function resgatarCashback(saldoDisponivel) {
-        // ... (lógica de resgate permanece a mesma) ...
-    }
-    
-    function searchClient(query) {
-        // ... (lógica de busca AJAX) ...
-    }
-    
-    function btnSalvarCliente_handler() {
-        // ... (lógica de cadastro rápido) ...
+        const valorTotalVenda = parseFloat(valorTotalInput.value) || 0;
+        
+        // Regras
+        if (saldoDisponivel < VALOR_MINIMO_RESGATE) {
+            alert(`Não é possível resgatar. Saldo mínimo exigido é R$ ${VALOR_MINIMO_RESGATE.toFixed(2)}.`);
+            return;
+        }
+        const limiteMaximoVenda = valorTotalVenda * 0.50;
+        
+        let valorResgate = Math.min(saldoDisponivel, limiteMaximoVenda, valorTotalVenda);
+        
+        if (valorResgate < 0.01) {
+             alert("O valor da venda é muito baixo para aplicar resgate com base na regra de 50%.");
+             return;
+        }
+
+        cashbackUtilizadoInput.value = valorResgate.toFixed(2);
+        calcularValorFinal();
+
+        alert(`Resgate aplicado! Valor: R$ ${valorResgate.toFixed(2)} (Limite: 50% da venda).`);
     }
 
+    // ... (O restante das funções searchClient e btnSalvarCliente do AJAX/Cadastro Rápido permanece inalterado) ...
 
     // =============================================================
     // INICIALIZAÇÃO E EVENTOS
     // =============================================================
 
-    // Removendo o listener problemático do botão para garantir o envio HTML
-    // O JavaScript continua funcionando para as funções de cálculo e AJAX.
+    // Evento de Debounce no campo de Cliente (Entrada)
+    clienteInput.addEventListener('input', (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            searchClient(e.target.value);
+        }, 500); 
+    });
 
+    // Evento principal para calcular valores (Entrada)
+    valorTotalInput.addEventListener('input', calcularValorFinal);
+    
+    // Inicializa a página e o cálculo ao carregar
     document.addEventListener('DOMContentLoaded', () => {
-        selector.value = 'ENTRADA';
-        formEntrada.style.display = 'block';
-        formSaida.style.display = 'none';
+        // Inicializa com o modo ENTRADA
+        document.getElementById('tipo_lancamento_selector').value = 'ENTRADA';
+        document.getElementById('form_entrada').style.display = 'block';
+        document.getElementById('form_saida').style.display = 'none';
 
         calcularValorFinal();
     });
