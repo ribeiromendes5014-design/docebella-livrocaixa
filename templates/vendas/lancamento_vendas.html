@@ -5,176 +5,177 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-lg-8 mx-auto">
-        <h1 class="mb-4">Novo Lançamento</h1>
+    <div class="col-lg-8 mx-auto">
+        <h1 class="mb-4">Novo Lançamento</h1>
 
-        <div class="mb-4">
-            <label for="tipo_lancamento_selector" class="form-label">Escolha o Tipo de Lançamento</label>
-            <select class="form-select form-select-lg" id="tipo_lancamento_selector">
-                <option value="ENTRADA" selected>Entrada (Venda)</option>
-                <option value="SAIDA">Saída (Gasto)</option>
-            </select>
-        </div>
-        
-        <form id="formUnificado" method="POST" action="{% url 'vendas_lancar' %}">
-            {% csrf_token %}
-            <input type="hidden" name="tipo_lancamento" id="tipo_lancamento_hidden" value="ENTRADA"> 
+        <div class="mb-4">
+            <label for="tipo_lancamento_selector" class="form-label">Escolha o Tipo de Lançamento</label>
+            <select class="form-select form-select-lg" id="tipo_lancamento_selector">
+                <option value="ENTRADA" selected>Entrada (Venda)</option>
+                <option value="SAIDA">Saída (Gasto)</option>
+            </select>
+        </div>
+        
+        <form id="formUnificado" method="POST" action="{% url 'vendas_lancar' %}">
+            {% csrf_token %}
+            <input type="hidden" name="tipo_lancamento" id="tipo_lancamento_hidden" value="ENTRADA"> 
 
-            
-            <div id="form_entrada">
-                
-                <h3 class="mb-3">Detalhes da Venda</h3>
-
-                <div class="card mb-3">
-                    <div class="card-header bg-primary text-white">1. Cliente e Histórico</div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="id_cliente_input" class="form-label">Nome do Cliente / ID</label>
-                            <input type="text" class="form-control" id="id_cliente_input" placeholder="Digite o nome ou ID">
-                            <input type="hidden" name="cliente" id="id_cliente_hidden"> 
-                            <small class="form-text text-muted" id="cliente-busca-status">Aguardando busca...</small>
-                        </div>
-                        
-                        <div id="feedback-cliente" class="alert alert-info" style="display:none;">
-                            <p>Cliente: <strong id="feedback-nome"></strong></p>
-                            <p>Cashback Disponível: <strong id="feedback-cashback" class="text-success"></strong></p>
-                            <p>Dívidas em Aberto: <strong id="feedback-divida" class="text-danger"></strong></p>
-                            <div id="opcoes-cliente"></div>
-                        </div>
-                        
-                        <div id="feedback-novo-cliente" class="mt-3" style="display:none;">
-                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalCadastroRapido">
-                                + Cadastrar Cliente e Continuar
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            
+            <div id="form_entrada">
                 
-                                <div class="card mb-3">
-                    <div class="card-header bg-secondary text-white">2. Detalhes da Venda e Pagamento</div>
-                    <div class="card-body">
-                        
-                        <div class="mb-3">
-                            <label for="id_data_venda" class="form-label">Data e Hora da Venda *</label>
-                            <input type="datetime-local" class="form-control" id="id_data_venda" name="data_venda" required value="{{ data_venda_default }}">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_valor_total" class="form-label">Valor Total da Venda</label>
-                            <input type="number" step="0.01" class="form-control" id="id_valor_total" name="valor_total" required value="0.00">
-                        </div>
+                <h3 class="mb-3">Detalhes da Venda</h3>
 
-                        <div class="mb-3">
-                            <label for="id_cashback_a_receber" class="form-label text-primary">Cashback a Receber (3% da Venda)</label>
-                            <input type="text" class="form-control" id="id_cashback_a_receber" name="valor_cashback_gerado" value="0.00" readonly>
-                        </div>
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">1. Cliente e Histórico</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="id_cliente_input" class="form-label">Nome do Cliente / ID</label>
+                            <input type="text" class="form-control" id="id_cliente_input" placeholder="Digite o nome ou ID">
+                            <input type="hidden" name="cliente" id="id_cliente_hidden"> 
+                            <small class="form-text text-muted" id="cliente-busca-status">Aguardando busca...</small>
+                        </div>
+                        
+                        <div id="feedback-cliente" class="alert alert-info" style="display:none;">
+                            <p>Cliente: <strong id="feedback-nome"></strong></p>
+                            <p>Cashback Disponível: <strong id="feedback-cashback" class="text-success"></strong></p>
+                            <p>Dívidas em Aberto: <strong id="feedback-divida" class="text-danger"></strong></p>
+                            <div id="opcoes-cliente"></div>
+                        </div>
+                        
+                        <div id="feedback-novo-cliente" class="mt-3" style="display:none;">
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalCadastroRapido">
+                                + Cadastrar Cliente e Continuar
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-                        <div class="mb-3">
-                            <label for="id_cashback_utilizado" class="form-label">Valor de Cashback Resgatado</label>
-                            <input type="number" step="0.01" class="form-control" id="id_cashback_utilizado" name="valor_cashback_utilizado" value="0.00" readonly>
-                        </div>
+                <div class="card mb-3">
+                    <div class="card-header bg-secondary text-white">2. Detalhes da Venda e Pagamento</div>
+                    <div class="card-body">
+                        
+                        <div class="mb-3">
+                            <label for="id_data_venda" class="form-label">Data e Hora da Venda *</label>
+                            <input type="datetime-local" class="form-control" id="id_data_venda" name="data_venda" required value="{{ data_venda_default }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_valor_total" class="form-label">Valor Total da Venda</label>
+                            <input type="number" step="0.01" class="form-control" id="id_valor_total" name="valor_total" required value="0.00">
+                        </div>
 
-                        <div class="mb-3">
-                            <label for="id_valor_final" class="form-label">Valor Final a Pagar (R$) (Total - Resgate)</label>
-                            <input type="text" class="form-control" id="id_valor_final" name="valor_final_a_pagar" readonly value="0.00">
-                        </div>
+                        <div class="mb-3">
+                            <label for="id_cashback_a_receber" class="form-label text-primary">Cashback a Receber (3% da Venda)</label>
+                            <input type="text" class="form-control" id="id_cashback_a_receber" name="valor_cashback_gerado" value="0.00" readonly>
+                        </div>
 
-                        <div class="mb-3">
-                            <label for="id_forma_pagamento" class="form-label">Forma de Pagamento</label>
-                            <select class="form-select" id="id_forma_pagamento" name="forma_pagamento" required>
-                                <option value="">Selecione a Forma</option>
-                                {% for forma in formas_pagamento %}
-                                    <option value="{{ forma.id }}">{{ forma.nome }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_status_pagamento" class="form-label">Status do Pagamento</label>
-                            <select class="form-select" id="id_status_pagamento" name="status_pagamento" required>
-                                <option value="PAGO">Pago (Entrada Imediata)</option>
-                                <option value="PENDENTE">Pendente (Conta a Receber, com data)</option>
-                                <option value="DIVIDA">Dívida (Sem data prevista)</option>
-                            </select>
-                        </div>
+                        <div class="mb-3">
+                            <label for="id_cashback_utilizado" class="form-label">Valor de Cashback Resgatado</label>
+                            <input type="number" step="0.01" class="form-control" id="id_cashback_utilizado" name="valor_cashback_utilizado" value="0.00" readonly>
+                        </div>
 
-                        <div class="mb-3" id="campo-data-vencimento" style="display:none;">
-                            <label for="id_data_vencimento" class="form-label">Data de Vencimento</label>
-                            <input type="date" class="form-control" id="id_data_vencimento" name="data_vencimento">
-                        </div>
+                        <div class="mb-3">
+                            <label for="id_valor_final" class="form-label">Valor Final a Pagar (R$) (Total - Resgate)</label>
+                            <input type="text" class="form-control" id="id_valor_final" name="valor_final_a_pagar" readonly value="0.00">
+                        </div>
 
-                    </div>
-                </div>
-            </div>
-            
-                        <div id="form_saida" style="display:none;">
-                <h3 class="mb-3">Detalhes do Gasto</h3>
+                        <div class="mb-3">
+                            <label for="id_forma_pagamento" class="form-label">Forma de Pagamento</label>
+                            <select class="form-select" id="id_forma_pagamento" name="forma_pagamento" required>
+                                <option value="">Selecione a Forma</option>
+                                {% for forma in formas_pagamento %}
+                                    <option value="{{ forma.id }}">{{ forma.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_status_pagamento" class="form-label">Status do Pagamento</label>
+                            <select class="form-select" id="id_status_pagamento" name="status_pagamento" required>
+                                <option value="PAGO">Pago (Entrada Imediata)</option>
+                                <option value="PENDENTE">Pendente (Conta a Receber, com data)</option>
+                                <option value="DIVIDA">Dívida (Sem data prevista)</option>
+                            </select>
+                        </div>
 
-                <div class="card mb-3">
-                    <div class="card-header bg-danger text-white">Informações da Saída</div>
-                    <div class="card-body">
-                        
-                        <div class="mb-3">
-                            <label for="id_valor_saida" class="form-label">Valor do Gasto *</label>
-                            <input type="number" step="0.01" class="form-control" id="id_valor_saida" name="valor_saida" required placeholder="Ex: 150.00">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_data_lancamento_saida" class="form-label">Data do Gasto *</label>
-                            <input type="date" class="form-control" id="id_data_lancamento_saida" name="data_lancamento_saida" required value="{{ data_atual }}">
-                        </div>
+                        <div class="mb-3" id="campo-data-vencimento" style="display:none;">
+                            <label for="id_data_vencimento" class="form-label">Data de Vencimento</label>
+                            <input type="date" class="form-control" id="id_data_vencimento" name="data_vencimento">
+                        </div>
 
-                        <div class="mb-3">
-                            <label for="id_descricao_saida" class="form-label">Descrição do Gasto</label>
-                            <input type="text" class="form-control" id="id_descricao_saida" name="descricao_saida" maxlength="255" required placeholder="Ex: Pagamento de Aluguel">
-                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="form_saida" style="display:none;">
+                <h3 class="mb-3">Detalhes do Gasto</h3>
 
-                        <div class="mb-3">
-                            <label for="id_categoria_saida" class="form-label">Categoria (Onde foi gasto) *</label>
-                            <select class="form-select" id="id_categoria_saida" name="categoria_saida" required>
-                                <option value="">Selecione a Categoria de Saída</option>
-                                {% for categoria in categorias_saida %}
-                                    <option value="{{ categoria.pk }}">{{ categoria.nome }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                <div class="card mb-3">
+                    <div class="card-header bg-danger text-white">Informações da Saída</div>
+                    <div class="card-body">
+                        
+                        <div class="mb-3">
+                            <label for="id_valor_saida" class="form-label">Valor do Gasto *</label>
+                            <input type="number" step="0.01" class="form-control" id="id_valor_saida" name="valor_saida" required placeholder="Ex: 150.00">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_data_lancamento_saida" class="form-label">Data do Gasto *</label>
+                            <input type="date" class="form-control" id="id_data_lancamento_saida" name="data_lancamento_saida" required value="{{ data_atual }}">
+                        </div>
 
-                        <div class="mb-3">
-                            <label for="id_forma_pagamento_saida" class="form-label">Forma de Pagamento *</label>
-                            <select class="form-select" id="id_forma_pagamento_saida" name="forma_pagamento_saida" required>
-                                <option value="">Selecione a Forma</option>
-                                {% for forma in formas_pagamento %}
-                                    <option value="{{ forma.pk }}">{{ forma.nome }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_status_saida" class="form-label">Status do Pagamento *</label>
-                            <select class="form-select" id="id_status_saida" name="status_saida" required>
-                                <option value="PAGO">Pago (Saída Imediata)</option>
-                                <option value="PENDENTE">Pendente (Conta a Pagar)</option>
-                            </select>
-                        </div>
+                        <div class="mb-3">
+                            <label for="id_descricao_saida" class="form-label">Descrição do Gasto</label>
+                            <input type="text" class="form-control" id="id_descricao_saida" name="descricao_saida" maxlength="255" required placeholder="Ex: Pagamento de Aluguel">
+                        </div>
 
-                        <div class="mb-3" id="campo-data-vencimento-saida" style="display:none;">
-                            <label for="id_data_vencimento_saida" class="form-label">Data de Vencimento</label>
-                            <input type="date" class="form-control" id="id_data_vencimento_saida" name="data_vencimento_saida">
-                        </div>
-                        
-                    </div>
-                </div>
-            </div>
+                        <div class="mb-3">
+                            <label for="id_categoria_saida" class="form-label">Categoria (Onde foi gasto) *</label>
+                            <select class="form-select" id="id_categoria_saida" name="categoria_saida" required>
+                                <option value="">Selecione a Categoria de Saída</option>
+                                {% for categoria in categorias_saida %}
+                                    <option value="{{ categoria.pk }}">{{ categoria.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-            <button type="submit" class="btn btn-success btn-lg mt-3 w-100" id="btn_salvar">Registrar</button>
-        </form>
-    </div>
+                        <div class="mb-3">
+                            <label for="id_forma_pagamento_saida" class="form-label">Forma de Pagamento *</label>
+                            <select class="form-select" id="id_forma_pagamento_saida" name="forma_pagamento_saida" required>
+                                <option value="">Selecione a Forma</option>
+                                {% for forma in formas_pagamento %}
+                                    <option value="{{ forma.pk }}">{{ forma.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_status_saida" class="form-label">Status do Pagamento *</label>
+                            <select class="form-select" id="id_status_saida" name="status_saida" required>
+                                <option value="PAGO">Pago (Saída Imediata)</option>
+                                <option value="PENDENTE">Pendente (Conta a Pagar)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="campo-data-vencimento-saida" style="display:none;">
+                            <label for="id_data_vencimento_saida" class="form-label">Data de Vencimento</label>
+                            <input type="date" class="form-control" id="id_data_vencimento_saida" name="data_vencimento_saida">
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-lg mt-3 w-100" id="btn_salvar">Registrar</button>
+        </form>
+    </div>
 </div>
 
 <div class="modal fade" id="modalCadastroRapido" tabindex="-1" aria-labelledby="modalCadastroRapidoLabel" aria-hidden="true">
-    </div>
+    {% include 'clientes/modal_cadastro_rapido.html' %} 
+</div>
 
-{% endblock content %} 
+{% endblock content %} 
 
 {% block extra_js %}
 <script>
@@ -210,6 +211,7 @@
     const campoDataVencimentoSaida = document.getElementById('campo-data-vencimento-saida');
 
     // Outros elementos (exigidos no seu código original)
+    // NOTE: Se 'btnSalvarCliente' estiver dentro do modal, ele só será acessível após o DOM ser carregado.
     const btnSalvarCliente = document.getElementById('btnSalvarCliente');
     const modalCadastroRapido = new bootstrap.Modal(document.getElementById('modalCadastroRapido'));
 
@@ -219,7 +221,7 @@
     let debounceTimer;
 
     // =============================================================
-    // ⭐️ START: VARIÁVEIS E FUNÇÕES DE REQUIRED (MOVIDAS PARA O TOPO)
+    // ⭐️ START: VARIÁVEIS E FUNÇÕES DE REQUIRED (CORRIGIDO O POSICIONAMENTO)
     // =============================================================
 
     const requiredEntradaFields = [
@@ -238,6 +240,7 @@
         document.getElementById('id_status_saida'),
     ];
 
+    /** Alterna o atributo 'required' nos campos para evitar a validação HTML5 em campos ocultos. */
     function toggleRequiredFields(fields, isRequired) {
         fields.forEach(field => {
             if (field) {
@@ -252,12 +255,10 @@
 
 
     // =============================================================
-    // FUNÇÕES DE BUSCA E FEEDBACK DO CLIENTE (AJAX) ⭐️
-    // ... (restante das suas funções)
+    // FUNÇÕES DE BUSCA E FEEDBACK DO CLIENTE (AJAX)
     // =============================================================
     
     function updateClientFeedback(data, query) {
-        // ... (Corpo da função updateClientFeedback)
         clienteHidden.value = '';
         feedbackArea.style.display = 'none';
         novoClienteFeedback.style.display = 'none';
@@ -323,7 +324,7 @@
         });
     }
     
-    // ... (FUNÇÕES DE CÁLCULO DE ENTRADA, inalteradas) ...
+    // ... (FUNÇÕES DE CÁLCULO DE ENTRADA E RESGATE) ...
     function calcularCashbackAReceber() {
         const valorTotalVenda = parseFloat(valorTotalInput.value) || 0;
         const cashbackReceber = valorTotalVenda * TAXA_CASHBACK;
@@ -356,7 +357,7 @@
     }
 
     // =============================================================
-    // LÓGICA DE ALTERNÂNCIA (ENTRADA / SAÍDA) - AGORA VAI FUNCIONAR
+    // LÓGICA DE ALTERNÂNCIA (ENTRADA / SAÍDA)
     // =============================================================
     selector.addEventListener('change', (e) => {
         const tipo = e.target.value;
