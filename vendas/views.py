@@ -186,37 +186,53 @@ def lancamento_vendas_view(request):
 # ===================================================================
 def buscar_cliente_ajax(request):
     """ Busca o cliente pelo ID OU nome e retorna o saldo de cashback e dívidas. """
-    query = request.GET.get('query')
+    query = request.GET.get('query', '').strip() # Limpeza da query
     
-    cliente = None
+    # 1. Busca por ID (Prioridade Máxima)
+    if query.isdigit():
+        try:
+            cliente = Cliente.objects.get(pk=query)
+            return JsonResponse({
+                'encontrado': True,
+                'id': cliente.id,
+                'nome': str(cliente),
+                'saldo_cashback': float(cliente.saldo_cashback),
+                'divida_total': float(cliente.divida_total),
+            })
+        except Cliente.DoesNotExist:
+            pass # Continua a busca por nome se o ID não for encontrado
+
+    # 2. Busca por Nome (Exata e Parcial)
+    # Sempre buscar uma lista para sugestão
+    clientes_encontrados = Cliente.objects.filter(
+        Q(nome__icontains=query) | Q(apelido__icontains=query)
+    ).order_by('nome')[:10] # Limita a 10 resultados para não sobrecarregar
     
-    if query:
-        if query.isdigit():
-            try:
-                cliente = Cliente.objects.get(pk=query)
-            except Cliente.DoesNotExist:
-                pass 
-
-        if not cliente:
-            cliente_exato = Cliente.objects.filter(Q(nome__iexact=query) | Q(apelido__iexact=query)).first()
-            if cliente_exato:
-                cliente = cliente_exato
-            else:
-                cliente = Cliente.objects.filter(Q(nome__icontains=query) | Q(apelido__icontains=query)).first()
-
-    if cliente:
-        data = {
-            'encontrado': True,
-            'id': cliente.id,
-            'nome': str(cliente), 
-            'saldo_cashback': float(cliente.saldo_cashback), 
-            'divida_total': float(cliente.divida_total),      
-        }
+    if clientes_encontrados.exists():
+        # Se for um único cliente, retorna os detalhes (comportamento atual)
+        if len(clientes_encontrados) == 1:
+            cliente = clientes_encontrados.first()
+            data = {
+                'encontrado': True,
+                'id': cliente.id,
+                'nome': str(cliente),
+                'saldo_cashback': float(cliente.saldo_cashback),
+                'divida_total': float(cliente.divida_total),
+            }
+        else:
+            # Se for uma lista de sugestões, retorna uma lista (novo comportamento)
+            data = {
+                'encontrado': True,
+                'sugestoes': [
+                    {'id': c.id, 'nome': str(c)} for c in clientes_encontrados
+                ]
+            }
     else:
+        # Não encontrou
         data = {
             'encontrado': False,
             'mensagem': 'Cliente não encontrado. Deseja cadastrar agora?',
-            'nome_sugerido': query 
+            'nome_sugerido': query
         }
         
     return JsonResponse(data)
