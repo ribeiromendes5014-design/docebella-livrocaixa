@@ -3,7 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # NOVO: Tela Unificada de Lançamento (Entrada ou Saída)
+    # Tela Unificada de Lançamento (Entrada ou Saída)
     path('novo-lancamento/', views.novo_lancamento_view, name='novo_lancamento'),
     
     # Endpoint para consulta rápida de cliente (Ainda necessária para AJAX)
