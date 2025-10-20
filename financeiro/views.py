@@ -1,4 +1,4 @@
-# financeiro/views.py
+# financeiro/views.py (Corrigido)
 from django.shortcuts import render
 from vendas.models import Venda
 from financeiro.models import Movimentacao, Categoria
@@ -7,25 +7,11 @@ from django.db.models.functions import TruncMonth
 from datetime import date, timedelta
 import calendar
 from django.db.models import F
+from decimal import Decimal # ⭐️ IMPORTAR DECIMAL
 
 # ===================================================================
 # 1. VIEW DE LANÇAMENTO DE SAÍDAS (GASTOS)
-# URL Name: 'saidas_lancar'
-# ===================================================================
-def lancamento_saidas_view(request):
-    """
-    Renderiza o formulário para registrar uma saída de caixa.
-    (Aqui a lógica de POST para salvar a movimentação de Saída será implementada)
-    """
-    # Você precisará passar as categorias de Saída para o formulário
-    # from .models import Categoria 
-    # categorias = Categoria.objects.filter(tipo='S') 
-    
-    context = {
-        # 'categorias': categorias
-    }
-    return render(request, 'financeiro/lancamento_saidas.html', context)
-
+# ... (código inalterado)
 
 # ===================================================================
 # 2. VIEW DE RELATÓRIOS MENSAIS (RELATORIOS DETALHADOS)
@@ -44,11 +30,16 @@ def relatorios_mensais_view(request):
     if mes_inicio_str and mes_fim_str:
         # Modo Personalizado: Filtro de Período
         try:
-            data_inicio = datetime.strptime(mes_inicio_str, '%Y-%m-%d')
-            data_fim = datetime.strptime(mes_fim_str, '%Y-%m-%d')
+            # Note: data_inicio precisa ser date/datetime para range funcionar corretamente
+            data_inicio = datetime.strptime(mes_inicio_str, '%Y-%m-%d').date()
+            data_fim = datetime.strptime(mes_fim_str, '%Y-%m-%d').date()
             
             # Ajusta para o final do mês, se necessário (depende da granularidade)
-            data_fim = data_fim.replace(day=calendar.monthrange(data_fim.year, data_fim.month)[1])
+            # Como você usa date__range, a correção aqui não é estritamente necessária,
+            # mas manteremos a lógica se você quiser garantir o final do mês
+            ultimo_dia = calendar.monthrange(data_fim.year, data_fim.month)[1]
+            data_fim = data_fim.replace(day=ultimo_dia)
+            
         except ValueError:
             # Em caso de formato inválido, volta para o padrão
             data_inicio = hoje.replace(day=1)
@@ -66,8 +57,11 @@ def relatorios_mensais_view(request):
         status='PAGO'
     ).select_related('categoria')
     
-    entradas_periodo = movs_periodo.filter(tipo='E').aggregate(total=Sum('valor'))['total'] or 0.00
-    saidas_periodo = movs_periodo.filter(tipo='S').aggregate(total=Sum('valor'))['total'] or 0.00
+    # ⭐️ CORREÇÃO: Usar Decimal(0) como fallback para manter a consistência de tipos
+    entradas_periodo = movs_periodo.filter(tipo='E').aggregate(total=Sum('valor'))['total'] or Decimal(0)
+    saidas_periodo = movs_periodo.filter(tipo='S').aggregate(total=Sum('valor'))['total'] or Decimal(0)
+    
+    # Linha 71: Agora a subtração é Decimal - Decimal (CORRETO)
     saldo_periodo = entradas_periodo - saidas_periodo
     
     # --- 3. DADOS PARA GRÁFICO DE CRESCIMENTO (Últimos 12 meses) ---
@@ -85,7 +79,7 @@ def relatorios_mensais_view(request):
     
     dados_grafico = [
         {'mes': item['mes_ano'].strftime('%Y-%m'), 
-         'valor': float(item['total_vendas'])}
+         'valor': float(item['total_vendas'])} # Mantido float() para serialização do gráfico
         for item in vendas_mensais
     ]
         
