@@ -136,19 +136,21 @@ def salvar_saida(request):
 # 2. VIEW PRINCIPAL (UNIFICADA)
 # ===================================================================
 @require_http_methods(["GET", "POST"])
-def novo_lancamento_view(request):
+def lancamento_vendas_view(request): # RENOMEADA AQUI
     
     if request.method == 'POST':
         tipo_lancamento = request.POST.get('tipo_lancamento') 
 
         if tipo_lancamento == 'ENTRADA':
-            return salvar_venda(request)
+            # Usa o nome da URL correta para redirecionamento
+            return salvar_venda(request) 
         
         elif tipo_lancamento == 'SAIDA':
+            # Usa o nome da URL correta para redirecionamento
             return salvar_saida(request)
             
         else:
-            return redirect('novo_lancamento') # Tipo inválido
+            return redirect('vendas_lancar') 
 
     # Lógica GET para RENDERIZAR
     elif request.method == 'GET':
@@ -161,7 +163,8 @@ def novo_lancamento_view(request):
             'data_venda_default': data_hora_atual,
             'data_atual': data_atual
         }
-        return render(request, 'vendas/novo_lancamento.html', context)
+        # CORRIGIDO: Renderiza o template com o nome que EXISTE no seu projeto
+        return render(request, 'vendas/lancamento_vendas.html', context)
 
 # ... (View buscar_cliente_ajax permanece abaixo, ou mova ela para o novo arquivo) ...
 
