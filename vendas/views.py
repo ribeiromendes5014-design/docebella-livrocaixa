@@ -89,34 +89,38 @@ def salvar_venda(request):
             )
 
             if cliente:
-                if valor_cashback_gerado > 0:
-                    CashbackMovimento.objects.create(
-                        cliente=cliente,
-                        tipo='G',
-                        valor=valor_cashback_gerado,
-                        venda_referencia=venda
-                    )
-                    cliente.saldo_cashback += valor_cashback_gerado
+    # --- Cashback gerado ---
+    if valor_cashback_gerado > 0:
+        CashbackMovimento.objects.create(
+            cliente=cliente,
+            tipo='G',
+            valor=valor_cashback_gerado,
+            venda_referencia=venda
+        )
+        cliente.saldo_cashback_db = (cliente.saldo_cashback_db or Decimal('0')) + valor_cashback_gerado
 
-                if valor_cashback_utilizado > 0:
-                    CashbackMovimento.objects.create(
-                        cliente=cliente,
-                        tipo='R',
-                        valor=-valor_cashback_utilizado,
-                        venda_referencia=venda
-                    )
-                    cliente.saldo_cashback -= valor_cashback_utilizado
+    # --- Cashback utilizado ---
+    if valor_cashback_utilizado > 0:
+        CashbackMovimento.objects.create(
+            cliente=cliente,
+            tipo='R',
+            valor=-valor_cashback_utilizado,
+            venda_referencia=venda
+        )
+        cliente.saldo_cashback_db = (cliente.saldo_cashback_db or Decimal('0')) - valor_cashback_utilizado
 
-                if status_pagamento in ['PENDENTE', 'DIVIDA'] and valor_recebido_liquido > 0:
-                    Divida.objects.create(
-                        cliente=cliente,
-                        valor_original=valor_recebido_liquido,
-                        valor_pendente=valor_recebido_liquido,
-                        data_vencimento=data_vencimento
-                    )
-                    cliente.divida_total += valor_recebido_liquido
+    # --- Dívida ---
+    if status_pagamento in ['PENDENTE', 'DIVIDA'] and valor_recebido_liquido > 0:
+        Divida.objects.create(
+            cliente=cliente,
+            valor_original=valor_recebido_liquido,
+            valor_pendente=valor_recebido_liquido,
+            data_vencimento=data_vencimento
+        )
+        cliente.divida_total_db = (cliente.divida_total_db or Decimal('0')) + valor_recebido_liquido
 
-                cliente.save()
+    cliente.save()
+
 
         return redirect('dashboard')
 
