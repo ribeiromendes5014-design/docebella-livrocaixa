@@ -88,7 +88,7 @@ def salvar_venda(request):
                 movimentacao_caixa=movimentacao_caixa,
             )
 
-            if cliente:
+   if cliente:
     # --- Cashback gerado ---
     if valor_cashback_gerado > 0:
         CashbackMovimento.objects.create(
@@ -120,6 +120,7 @@ def salvar_venda(request):
         cliente.divida_total_db = (cliente.divida_total_db or Decimal('0')) + valor_recebido_liquido
 
     cliente.save()
+
 
 
         return redirect('dashboard')
