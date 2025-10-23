@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg">
+                <div class="card-header bg-dark text-white text-center">
+                    <h4>🔐 Acesso ao Sistema</h4>
+                </div>
+                <div class="card-body">
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            Usuário ou senha incorretos. Tente novamente.
+                        </div>
+                    {% endif %}
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">Usuário</label>
+                            {{ form.username }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_password" class="form-label">Senha</label>
+                            {{ form.password }}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Entrar</button>
+                    </form>
+                </div>
+            </div>
+            <p class="text-center mt-3 text-muted">
+                © {{ now|date:"Y" }} DoceBella — Livro Caixa
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
