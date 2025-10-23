@@ -23,7 +23,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-chave-de-desenvolvime
 DEBUG = True # Forçamos True para facilitar o desenvolvimento local
 ALLOWED_HOSTS = os.environ.get(
     'ALLOWED_HOSTS', 
-    '127.0.0.1,localhost,docebella-livrocaixa-6gck.onrender.com' # <--- Adicionado aqui
+    '127.0.0.1,localhost,docebella-livrocaixa-iorl.onrender.com' # <--- Adicionado aqui
 ).split(',')
 
 # ==============================================================================
