@@ -1,87 +1,91 @@
 # clientes/views.py
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt 
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
 
-from .models import Cliente, Divida, CashbackMovimento
-from vendas.models import Venda 
-from django.db.models import Q # Para buscas avançadas
+from core.github_storage import salvar_dados_json, ler_dados_json
 
-# ===================================================================
-# 1. VIEW DE LISTAGEM (URL: /clientes/)
-# ===================================================================
+
+# ==========================================================
+# 1. LISTAR CLIENTES (usa dados do GitHub)
+# ==========================================================
 def clientes_lista_view(request):
     """
-    Lista todos os clientes com seus saldos de cashback e dívidas.
+    Lista todos os clientes salvos no GitHub (data/clientes.json)
     """
-    # Consulta todos os clientes e usa as @property para exibir os saldos
-    clientes = Cliente.objects.all().order_by('nome')
-    
-    context = {
-        'clientes': clientes
-    }
-    return render(request, 'clientes/clientes_lista.html', context)
+    clientes = ler_dados_json("clientes")
+    clientes = sorted(clientes, key=lambda c: c.get("nome", "").lower())
 
-# ===================================================================
-# 2. VIEW DE DETALHE (URL: /clientes/<pk>/)
-# ===================================================================
+    context = {"clientes": clientes}
+    return render(request, "clientes/clientes_lista.html", context)
+
+
+# ==========================================================
+# 2. DETALHE DO CLIENTE
+# ==========================================================
 def cliente_detalhe_view(request, pk):
     """
-    Exibe informações completas do cliente, histórico de compras, dívidas e cashback.
+    Exibe informações completas de um cliente (busca no JSON).
     """
-    cliente = get_object_or_404(Cliente, pk=pk)
-    
-    # 2. Puxa todos os dados relacionados, otimizando o acesso ao banco
-    dividas = cliente.divida_set.filter(pago=False).order_by('-data_vencimento')
-    movimentos_cashback = cliente.cashbackmovimento_set.all().order_by('-data_movimento')
-    historico_compras = Venda.objects.filter(cliente=cliente).select_related('movimentacao_caixa').order_by('-data_venda')
-    
-    context = {
-        'cliente': cliente,
-        'dividas': dividas,
-        'movimentos_cashback': movimentos_cashback,
-        'historico_compras': historico_compras,
-    }
-    
-    return render(request, 'clientes/cliente_detalhe.html', context)
+    clientes = ler_dados_json("clientes")
+    cliente = next((c for c in clientes if c.get("id") == pk), None)
 
-# ===================================================================
-# 3. VIEW DE CADASTRO RÁPIDO (URL: /clientes/cadastrar-rapido/)
-# ===================================================================
+    if not cliente:
+        return JsonResponse({"erro": "Cliente não encontrado"}, status=404)
+
+    context = {"cliente": cliente}
+    return render(request, "clientes/cliente_detalhe.html", context)
+
+
+# ==========================================================
+# 3. CADASTRO RÁPIDO (AJAX)
+# ==========================================================
 @require_POST
-@csrf_exempt 
+@csrf_exempt
 def cadastro_rapido_ajax(request):
     """
-    Recebe os dados do modal de cadastro rápido (com campos adicionais) e cria um novo cliente.
+    Recebe os dados do modal de cadastro rápido e salva no GitHub.
     """
     try:
-        # Campos Coletados do Formulário
-        nome = request.POST.get('nome')
-        sobrenome = request.POST.get('sobrenome')
-        apelido = request.POST.get('apelido')
-        telefone = request.POST.get('telefone')
-        email = request.POST.get('email')
-        
+        nome = request.POST.get("nome")
+        sobrenome = request.POST.get("sobrenome")
+        apelido = request.POST.get("apelido")
+        telefone = request.POST.get("telefone")
+        email = request.POST.get("email")
+
         if not nome:
-            return JsonResponse({'sucesso': False, 'mensagem': 'Nome é obrigatório.'}, status=400)
-            
-        # Cria o Cliente com todos os dados
-        novo_cliente = Cliente.objects.create(
-            nome=nome,
-            sobrenome=sobrenome,
-            apelido=apelido,
-            telefone=telefone,
-            email=email,
-        )
-        
+            return JsonResponse({"sucesso": False, "mensagem": "Nome é obrigatório."}, status=400)
+
+        # Lê a lista existente
+        clientes = ler_dados_json("clientes")
+
+        # Gera ID sequencial (baseado no último cliente)
+        novo_id = (max([c.get("id", 0) for c in clientes]) + 1) if clientes else 1
+
+        novo_cliente = {
+            "id": novo_id,
+            "nome": nome,
+            "sobrenome": sobrenome,
+            "apelido": apelido,
+            "telefone": telefone,
+            "email": email,
+            "saldo_cashback": 0.0,
+            "divida_total": 0.0,
+        }
+
+        # Adiciona e salva no GitHub
+        clientes.append(novo_cliente)
+        salvar_dados_json("clientes", clientes)
+
         return JsonResponse({
-            'sucesso': True,
-            'id': novo_cliente.id,
-            'nome': str(novo_cliente), 
-            'saldo_cashback': float(novo_cliente.saldo_cashback),
-            'divida_total': float(novo_cliente.divida_total),
+            "sucesso": True,
+            "id": novo_id,
+            "nome": nome,
+            "saldo_cashback": 0.0,
+            "divida_total": 0.0,
         })
 
     except Exception as e:
-        return JsonResponse({'sucesso': False, 'mensagem': f"Erro ao cadastrar: {e}"}, status=500)
+        return JsonResponse({"sucesso": False, "mensagem": f"Erro ao cadastrar: {e}"}, status=500)
