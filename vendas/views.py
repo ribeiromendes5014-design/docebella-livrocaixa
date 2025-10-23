@@ -22,14 +22,16 @@ TAXA_CASHBACK = Decimal('0.03')
 # ===================================================================
 # FUNÇÕES HELPERS DE SALVAMENTO (Processam o POST)
 # ===================================================================
+from .models import Venda, VendaItem, Produto  # certifique-se que está importando tudo
+
 def salvar_venda(request):
-    """Processa o POST do formulário de Entrada (Venda)."""
+    """Processa o POST do formulário de Entrada (Venda) com produtos e observação."""
     try:
-        # 1. Coleta de Dados
         cliente_id = request.POST.get('cliente', '').strip()
         data_venda_str = request.POST.get('data_venda')
         valor_total_str = request.POST.get('valor_total', '0').strip().replace(',', '.')
         valor_cashback_utilizado_str = request.POST.get('valor_cashback_utilizado', '0').strip().replace(',', '.')
+        observacao = request.POST.get('observacao', '').strip()
 
         try:
             valor_total = Decimal(valor_total_str)
@@ -62,6 +64,7 @@ def salvar_venda(request):
         valor_cashback_gerado = valor_total * TAXA_CASHBACK
 
         with transaction.atomic():
+            # Garante categoria 'VENDAS' no financeiro
             try:
                 categoria_venda = Categoria.objects.get(nome='VENDAS', tipo='E')
             except ObjectDoesNotExist:
@@ -78,6 +81,7 @@ def salvar_venda(request):
                 data_vencimento=data_vencimento if data_vencimento else None
             )
 
+            # Cria a venda
             venda = Venda.objects.create(
                 cliente=cliente,
                 valor_total=valor_total,
@@ -86,10 +90,38 @@ def salvar_venda(request):
                 forma_pagamento=forma_pagamento,
                 data_venda=data_venda,
                 movimentacao_caixa=movimentacao_caixa,
+                observacao=observacao
             )
 
+            # Salva itens da venda (produtos e quantidades)
+            produtos_ids = request.POST.getlist('produtos[]')
+            quantidades = request.POST.getlist('quantidades[]')
+            valores_unitarios = request.POST.getlist('valores_unitarios[]')
+
+            for i in range(len(produtos_ids)):
+                try:
+                    produto = Produto.objects.get(pk=produtos_ids[i])
+                    qtd = Decimal(quantidades[i])
+                    valor_unit = Decimal(valores_unitarios[i])
+                    subtotal = qtd * valor_unit
+
+                    VendaItem.objects.create(
+                        venda=venda,
+                        produto=produto,
+                        quantidade=qtd,
+                        valor_unitario=valor_unit,
+                        subtotal=subtotal
+                    )
+
+                    # Atualiza estoque
+                    produto.estoque = max(produto.estoque - int(qtd), 0)
+                    produto.save()
+
+                except Exception as item_err:
+                    print(f"Erro ao adicionar item da venda: {item_err}")
+
+            # Cashback e dívidas (igual à versão anterior)
             if cliente:
-                # --- Cashback gerado ---
                 if valor_cashback_gerado > 0:
                     CashbackMovimento.objects.create(
                         cliente=cliente,
@@ -99,7 +131,6 @@ def salvar_venda(request):
                     )
                     cliente.saldo_cashback_db = (cliente.saldo_cashback_db or Decimal('0')) + valor_cashback_gerado
 
-                # --- Cashback utilizado ---
                 if valor_cashback_utilizado > 0:
                     CashbackMovimento.objects.create(
                         cliente=cliente,
@@ -109,7 +140,6 @@ def salvar_venda(request):
                     )
                     cliente.saldo_cashback_db = (cliente.saldo_cashback_db or Decimal('0')) - valor_cashback_utilizado
 
-                # --- Dívida ---
                 if status_pagamento in ['PENDENTE', 'DIVIDA'] and valor_recebido_liquido > 0:
                     Divida.objects.create(
                         cliente=cliente,
@@ -126,6 +156,7 @@ def salvar_venda(request):
     except Exception as e:
         print(f"ERRO AO SALVAR VENDA: {e}")
         return redirect('vendas_lancar')
+
 
 
 # ===================================================================
