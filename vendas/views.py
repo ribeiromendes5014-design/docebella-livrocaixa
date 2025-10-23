@@ -68,7 +68,7 @@ def salvar_venda(request):
         valor_recebido_liquido = valor_total - valor_cashback_utilizado
         valor_cashback_gerado = valor_total * TAXA_CASHBACK
 
-        with transaction.atomic():
+                with transaction.atomic():
             # 3. CRIAÇÃO DA MOVIMENTAÇÃO FINANCEIRA (ENTRADA)
             try:
                 categoria_venda = Categoria.objects.get(nome='VENDAS', tipo='E')
@@ -98,39 +98,40 @@ def salvar_venda(request):
             )
 
             # 5. ATUALIZAÇÃO DO SISTEMA DE FIDELIDADE/DÍVIDAS
-if cliente:
-    # --- Cashback gerado ---
-    if valor_cashback_gerado > 0:
-        CashbackMovimento.objects.create(
-            cliente=cliente,
-            tipo='G',
-            valor=valor_cashback_gerado,
-            venda_referencia=venda
-        )
-        cliente.saldo_cashback += valor_cashback_gerado
+            if cliente:
+                # --- Cashback gerado ---
+                if valor_cashback_gerado > 0:
+                    CashbackMovimento.objects.create(
+                        cliente=cliente,
+                        tipo='G',
+                        valor=valor_cashback_gerado,
+                        venda_referencia=venda
+                    )
+                    cliente.saldo_cashback += valor_cashback_gerado
 
-    # --- Cashback utilizado ---
-    if valor_cashback_utilizado > 0:
-        CashbackMovimento.objects.create(
-            cliente=cliente,
-            tipo='R',
-            valor=-valor_cashback_utilizado,
-            venda_referencia=venda
-        )
-        cliente.saldo_cashback -= valor_cashback_utilizado
+                # --- Cashback utilizado ---
+                if valor_cashback_utilizado > 0:
+                    CashbackMovimento.objects.create(
+                        cliente=cliente,
+                        tipo='R',
+                        valor=-valor_cashback_utilizado,
+                        venda_referencia=venda
+                    )
+                    cliente.saldo_cashback -= valor_cashback_utilizado
 
-    # --- Dívida ---
-    if status_pagamento in ['PENDENTE', 'DIVIDA'] and valor_recebido_liquido > 0:
-        Divida.objects.create(
-            cliente=cliente,
-            valor_original=valor_recebido_liquido,
-            valor_pendente=valor_recebido_liquido,
-            data_vencimento=data_vencimento
-        )
-        cliente.divida_total += valor_recebido_liquido
+                # --- Dívida ---
+                if status_pagamento in ['PENDENTE', 'DIVIDA'] and valor_recebido_liquido > 0:
+                    Divida.objects.create(
+                        cliente=cliente,
+                        valor_original=valor_recebido_liquido,
+                        valor_pendente=valor_recebido_liquido,
+                        data_vencimento=data_vencimento
+                    )
+                    cliente.divida_total += valor_recebido_liquido
 
-    # --- Salva as alterações no cliente ---
-    cliente.save()
+                # --- Salva o cliente atualizado ---
+                cliente.save()
+
 
 
 def salvar_saida(request):
