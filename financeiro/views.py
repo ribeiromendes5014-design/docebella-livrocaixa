@@ -7,6 +7,7 @@ from django.db.models.functions import TruncMonth
 from datetime import date, timedelta
 import calendar
 from django.db.models import F
+from decimal import Decimal
 
 # ===================================================================
 # 1. VIEW DE LANÇAMENTO DE SAÍDAS (GASTOS)
