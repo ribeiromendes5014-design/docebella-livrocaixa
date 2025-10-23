@@ -8,6 +8,9 @@ from datetime import date, timedelta
 import calendar
 from django.db.models import F
 from decimal import Decimal
+from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+
 
 # ===================================================================
 # 1. VIEW DE LANÇAMENTO DE SAÍDAS (GASTOS)
