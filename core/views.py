@@ -13,3 +13,10 @@ def dashboard_view(request):
     }
     # Certifique-se de que o arquivo templates/dashboard.html existe!
     return render(request, 'dashboard.html', context)
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def relatorios_view(request):
+    return render(request, 'relatorios.html')
