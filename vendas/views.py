@@ -9,6 +9,8 @@ from datetime import datetime
 from decimal import Decimal
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 
 # Importa Modelos
 from clientes.models import Cliente, CashbackMovimento, Divida
