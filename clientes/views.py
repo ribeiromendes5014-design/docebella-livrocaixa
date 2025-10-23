@@ -12,15 +12,17 @@ from core.github_storage import salvar_dados_json, ler_dados_json
 # ==========================================================
 # 1. LISTAR CLIENTES (usa dados do GitHub)
 # ==========================================================
+from django.shortcuts import render
+from .models import Cliente
+
 def clientes_lista_view(request):
     """
-    Lista todos os clientes salvos no GitHub (data/clientes.json)
+    Lista todos os clientes cadastrados no banco de dados PostgreSQL.
     """
-    clientes = ler_dados_json("clientes")
-    clientes = sorted(clientes, key=lambda c: c.get("nome", "").lower())
-
+    clientes = Cliente.objects.all().order_by('nome')
     context = {"clientes": clientes}
     return render(request, "clientes/clientes_lista.html", context)
+
 
 # ==========================================================
 # 2. excluir clientes
