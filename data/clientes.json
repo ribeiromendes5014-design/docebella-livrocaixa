@@ -1,0 +1,12 @@
+[
+    {
+        "id": 1,
+        "nome": "teste",
+        "sobrenome": null,
+        "apelido": "",
+        "telefone": "",
+        "email": null,
+        "saldo_cashback": 0.0,
+        "divida_total": 0.0
+    }
+]
