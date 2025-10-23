@@ -1,20 +1,14 @@
 # clientes/views.py
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from .models import Cliente
-from django.shortcuts import get_object_or_404, redirect
-from core.github_storage import salvar_dados_json, ler_dados_json
-
 
 # ==========================================================
-# 1. LISTAR CLIENTES (usa dados do GitHub)
+# 1. LISTAR CLIENTES (banco de dados PostgreSQL)
 # ==========================================================
-from django.shortcuts import render
-from .models import Cliente
-
 def clientes_lista_view(request):
     """
     Lista todos os clientes cadastrados no banco de dados PostgreSQL.
@@ -25,7 +19,7 @@ def clientes_lista_view(request):
 
 
 # ==========================================================
-# 2. excluir clientes
+# 2. EXCLUIR CLIENTE
 # ==========================================================
 def excluir_cliente(request, cliente_id):
     if request.method == 'POST':
@@ -37,38 +31,30 @@ def excluir_cliente(request, cliente_id):
 
 
 # ==========================================================
-# 3. DETALHE DO CLIENTE
+# 3. DETALHE DO CLIENTE (usa banco)
 # ==========================================================
 def cliente_detalhe_view(request, pk):
     """
-    Exibe informações completas de um cliente (busca no JSON).
+    Exibe informações completas de um cliente (busca no banco PostgreSQL).
     """
-    clientes = ler_dados_json("clientes")
+    cliente = get_object_or_404(Cliente, pk=pk)
 
-    # 🔧 Conversão para int antes da busca
-    try:
-        pk = int(pk)
-    except ValueError:
-        return JsonResponse({"erro": "ID inválido"}, status=400)
-
-    cliente = next((c for c in clientes if c.get("id") == pk), None)
-
-    if not cliente:
-        return JsonResponse({"erro": "Cliente não encontrado"}, status=404)
-
-    context = {"cliente": cliente}
+    context = {
+        "cliente": cliente,
+        "saldo_cashback": cliente.saldo_cashback,
+        "divida_total": cliente.divida_total,
+    }
     return render(request, "clientes/cliente_detalhe.html", context)
 
 
-
 # ==========================================================
-# 4. CADASTRO RÁPIDO (AJAX)
+# 4. CADASTRO RÁPIDO (AJAX) - salva no banco
 # ==========================================================
 @require_POST
 @csrf_exempt
 def cadastro_rapido_ajax(request):
     """
-    Recebe os dados do modal de cadastro rápido e salva no GitHub.
+    Recebe os dados do modal de cadastro rápido e salva no banco PostgreSQL.
     """
     try:
         nome = request.POST.get("nome")
@@ -80,33 +66,21 @@ def cadastro_rapido_ajax(request):
         if not nome:
             return JsonResponse({"sucesso": False, "mensagem": "Nome é obrigatório."}, status=400)
 
-        # Lê a lista existente
-        clientes = ler_dados_json("clientes")
-
-        # Gera ID sequencial (baseado no último cliente)
-        novo_id = (max([c.get("id", 0) for c in clientes]) + 1) if clientes else 1
-
-        novo_cliente = {
-            "id": novo_id,
-            "nome": nome,
-            "sobrenome": sobrenome,
-            "apelido": apelido,
-            "telefone": telefone,
-            "email": email,
-            "saldo_cashback": 0.0,
-            "divida_total": 0.0,
-        }
-
-        # Adiciona e salva no GitHub
-        clientes.append(novo_cliente)
-        salvar_dados_json("clientes", clientes)
+        # Cria o cliente direto no banco
+        cliente = Cliente.objects.create(
+            nome=nome,
+            sobrenome=sobrenome,
+            apelido=apelido,
+            telefone=telefone,
+            email=email,
+        )
 
         return JsonResponse({
             "sucesso": True,
-            "id": novo_id,
-            "nome": nome,
-            "saldo_cashback": 0.0,
-            "divida_total": 0.0,
+            "id": cliente.id,
+            "nome": cliente.nome,
+            "saldo_cashback": cliente.saldo_cashback,
+            "divida_total": cliente.divida_total,
         })
 
     except Exception as e:
