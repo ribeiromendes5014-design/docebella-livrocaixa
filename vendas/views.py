@@ -98,41 +98,39 @@ def salvar_venda(request):
             )
 
             # 5. ATUALIZAÇÃO DO SISTEMA DE FIDELIDADE/DÍVIDAS
-            if cliente and valor_cashback_gerado > 0:
-                CashbackMovimento.objects.create(
-                    cliente=cliente,
-                    tipo='G',
-                    valor=valor_cashback_gerado,
-                    venda_referencia=venda
-                )
+if cliente:
+    # --- Cashback gerado ---
+    if valor_cashback_gerado > 0:
+        CashbackMovimento.objects.create(
+            cliente=cliente,
+            tipo='G',
+            valor=valor_cashback_gerado,
+            venda_referencia=venda
+        )
+        cliente.saldo_cashback += valor_cashback_gerado
 
-            if cliente and valor_cashback_utilizado > 0:
-                CashbackMovimento.objects.create(
-                    cliente=cliente,
-                    tipo='R',
-                    valor=-valor_cashback_utilizado,
-                    venda_referencia=venda
-                )
+    # --- Cashback utilizado ---
+    if valor_cashback_utilizado > 0:
+        CashbackMovimento.objects.create(
+            cliente=cliente,
+            tipo='R',
+            valor=-valor_cashback_utilizado,
+            venda_referencia=venda
+        )
+        cliente.saldo_cashback -= valor_cashback_utilizado
 
-            if status_pagamento in ['PENDENTE', 'DIVIDA'] and cliente and valor_recebido_liquido > 0:
-                Divida.objects.create(
-                    cliente=cliente,
-                    valor_original=valor_recebido_liquido,
-                    valor_pendente=valor_recebido_liquido,
-                    data_vencimento=data_vencimento
-                )
+    # --- Dívida ---
+    if status_pagamento in ['PENDENTE', 'DIVIDA'] and valor_recebido_liquido > 0:
+        Divida.objects.create(
+            cliente=cliente,
+            valor_original=valor_recebido_liquido,
+            valor_pendente=valor_recebido_liquido,
+            data_vencimento=data_vencimento
+        )
+        cliente.divida_total += valor_recebido_liquido
 
-        return redirect('dashboard')
-
-    except ValueError as e:
-        print(f"ERRO DE VALIDAÇÃO (Campos): {e}")
-        return redirect('vendas_lancar')
-    except ObjectDoesNotExist as e:
-        print(f"ERRO DE OBJETO NÃO ENCONTRADO: {e}")
-        return redirect('vendas_lancar')
-    except Exception as e:
-        print(f"ERRO GERAL AO SALVAR VENDA: {e}")
-        return redirect('vendas_lancar')
+    # --- Salva as alterações no cliente ---
+    cliente.save()
 
 
 def salvar_saida(request):
