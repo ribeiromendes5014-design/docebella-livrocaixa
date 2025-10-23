@@ -68,5 +68,15 @@
         "email": null,
         "saldo_cashback": 0.0,
         "divida_total": 0.0
+    },
+    {
+        "id": 8,
+        "nome": "renan",
+        "sobrenome": null,
+        "apelido": "",
+        "telefone": "",
+        "email": null,
+        "saldo_cashback": 0.0,
+        "divida_total": 0.0
     }
 ]
