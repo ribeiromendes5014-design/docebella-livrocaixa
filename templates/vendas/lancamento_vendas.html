@@ -462,19 +462,24 @@
     statusPagamentoSaida.addEventListener('change', (e) => {
         campoDataVencimentoSaida.style.display = (e.target.value === 'PENDENTE') ? 'block' : 'none';
     });
-    // ✅ Corrige o envio de valores numéricos com vírgula no submit
-document.getElementById('formUnificado').addEventListener('submit', function() {
+    // ✅ Corrige valores e mantém o CSRF válido ao enviar o formulário
+document.getElementById('formUnificado').addEventListener('submit', function (e) {
+    e.preventDefault(); // evita envio antes da limpeza
+
+    const form = this;
     const campoValor = document.getElementById('id_valor_total');
-    if (campoValor && campoValor.value) {
-        campoValor.value = campoValor.value.replace(',', '.');
-    }
-
     const campoCashback = document.getElementById('id_cashback_utilizado');
-    if (campoCashback && campoCashback.value) {
-        campoCashback.value = campoCashback.value.replace(',', '.');
-    }
-});
 
+    if (campoValor && campoValor.value) {
+        campoValor.value = campoValor.value.replace(/[^\d,.-]/g, '').replace(',', '.');
+    }
+    if (campoCashback && campoCashback.value) {
+        campoCashback.value = campoCashback.value.replace(/[^\d,.-]/g, '').replace(',', '.');
+    }
+
+    // ✅ envia o formulário logo em seguida (CSRF token permanece intacto)
+    setTimeout(() => form.submit(), 100);
+});
 
 
     // =============================================================
