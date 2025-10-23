@@ -120,6 +120,11 @@ def salvar_venda(request):
 
         return redirect('dashboard')
 
+    except Exception as e:  # 👈 Repare que agora está DENTRO da função
+        print(f"ERRO AO SALVAR VENDA: {e}")
+        return redirect('vendas_lancar')
+
+
 
 def salvar_saida(request):
     """Processa o POST do formulário de Saída (Gasto)."""
