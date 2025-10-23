@@ -4,7 +4,8 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-
+from .models import Cliente
+from django.shortcuts import get_object_or_404, redirect
 from core.github_storage import salvar_dados_json, ler_dados_json
 
 
@@ -21,9 +22,20 @@ def clientes_lista_view(request):
     context = {"clientes": clientes}
     return render(request, "clientes/clientes_lista.html", context)
 
+# ==========================================================
+# 2. excluir clientes
+# ==========================================================
+def excluir_cliente(request, cliente_id):
+    if request.method == 'POST':
+        cliente = get_object_or_404(Cliente, pk=cliente_id)
+        nome = cliente.nome
+        cliente.delete()
+        messages.success(request, f'O cliente "{nome}" foi excluído com sucesso!')
+    return redirect('clientes_lista')
+
 
 # ==========================================================
-# 2. DETALHE DO CLIENTE
+# 3. DETALHE DO CLIENTE
 # ==========================================================
 def cliente_detalhe_view(request, pk):
     """
@@ -48,7 +60,7 @@ def cliente_detalhe_view(request, pk):
 
 
 # ==========================================================
-# 3. CADASTRO RÁPIDO (AJAX)
+# 4. CADASTRO RÁPIDO (AJAX)
 # ==========================================================
 @require_POST
 @csrf_exempt
