@@ -25,11 +25,9 @@ TAXA_CASHBACK = Decimal('0.03')
 def salvar_venda(request):
     """Processa o POST do formulário de Entrada (Venda)."""
     try:
-        # 1. Coleta de Dados (Com tratamento de string vazia)
+        # 1. Coleta de Dados
         cliente_id = request.POST.get('cliente', '').strip()
         data_venda_str = request.POST.get('data_venda')
-
-        # ✅ Conversão segura para Decimal (aceita vírgulas e pontos)
         valor_total_str = request.POST.get('valor_total', '0').strip().replace(',', '.')
         valor_cashback_utilizado_str = request.POST.get('valor_cashback_utilizado', '0').strip().replace(',', '.')
 
@@ -43,33 +41,27 @@ def salvar_venda(request):
         except Exception:
             valor_cashback_utilizado = Decimal('0.00')
 
-        # CRÍTICO: Forma de pagamento é obrigatória
         forma_pagamento_id = request.POST.get('forma_pagamento', '').strip()
         status_pagamento = request.POST.get('status_pagamento')
         data_vencimento = request.POST.get('data_vencimento')
 
-        # 1b. Validações Essenciais
         if valor_total <= 0:
             raise ValueError("O Valor Total da Venda deve ser maior que zero.")
         if not forma_pagamento_id:
             raise ValueError("A Forma de Pagamento é obrigatória e não foi selecionada.")
 
-        # Converte data_venda
         data_venda = (
             datetime.strptime(data_venda_str, '%Y-%m-%dT%H:%M').astimezone(timezone.get_current_timezone())
             if data_venda_str else timezone.now()
         )
 
-        # 2. Objetos Chave (Busca Segura)
         cliente = Cliente.objects.get(pk=cliente_id) if cliente_id else None
         forma_pagamento = FormaPagamento.objects.get(pk=forma_pagamento_id)
 
-        # --- CÁLCULOS ESSENCIAIS ---
         valor_recebido_liquido = valor_total - valor_cashback_utilizado
         valor_cashback_gerado = valor_total * TAXA_CASHBACK
 
-                with transaction.atomic():
-            # 3. CRIAÇÃO DA MOVIMENTAÇÃO FINANCEIRA (ENTRADA)
+        with transaction.atomic():
             try:
                 categoria_venda = Categoria.objects.get(nome='VENDAS', tipo='E')
             except ObjectDoesNotExist:
@@ -86,7 +78,6 @@ def salvar_venda(request):
                 data_vencimento=data_vencimento if data_vencimento else None
             )
 
-            # 4. CRIAÇÃO DO REGISTRO DE VENDA
             venda = Venda.objects.create(
                 cliente=cliente,
                 valor_total=valor_total,
@@ -97,9 +88,7 @@ def salvar_venda(request):
                 movimentacao_caixa=movimentacao_caixa,
             )
 
-            # 5. ATUALIZAÇÃO DO SISTEMA DE FIDELIDADE/DÍVIDAS
             if cliente:
-                # --- Cashback gerado ---
                 if valor_cashback_gerado > 0:
                     CashbackMovimento.objects.create(
                         cliente=cliente,
@@ -109,7 +98,6 @@ def salvar_venda(request):
                     )
                     cliente.saldo_cashback += valor_cashback_gerado
 
-                # --- Cashback utilizado ---
                 if valor_cashback_utilizado > 0:
                     CashbackMovimento.objects.create(
                         cliente=cliente,
@@ -119,7 +107,6 @@ def salvar_venda(request):
                     )
                     cliente.saldo_cashback -= valor_cashback_utilizado
 
-                # --- Dívida ---
                 if status_pagamento in ['PENDENTE', 'DIVIDA'] and valor_recebido_liquido > 0:
                     Divida.objects.create(
                         cliente=cliente,
@@ -129,15 +116,14 @@ def salvar_venda(request):
                     )
                     cliente.divida_total += valor_recebido_liquido
 
-                # --- Salva o cliente atualizado ---
                 cliente.save()
 
+        return redirect('dashboard')
 
 
 def salvar_saida(request):
     """Processa o POST do formulário de Saída (Gasto)."""
     try:
-        # ✅ Conversão segura para Decimal (aceita vírgulas e pontos)
         valor_str = request.POST.get('valor_saida', '0').strip().replace(',', '.')
         try:
             valor = Decimal(valor_str)
