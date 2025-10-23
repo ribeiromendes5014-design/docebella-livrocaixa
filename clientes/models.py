@@ -3,41 +3,27 @@ from django.db import models
 from django.db.models import Sum
 
 class Cliente(models.Model):
-    """
-    Modelo base para o cadastro de clientes.
-    """
     nome = models.CharField(max_length=150)
-    # NOVOS CAMPOS ADICIONADOS:
     sobrenome = models.CharField(max_length=150, blank=True, null=True)
     apelido = models.CharField(max_length=100, blank=True, null=True)
-    # Campos originais
     telefone = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(max_length=100, blank=True, null=True)
-    
-    # Campo calculado para acesso rápido (opcional, mas útil para consultas)
+
+    # Campos salvos no banco:
+    saldo_cashback_db = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    divida_total_db = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    # Propriedades calculadas (mantêm compatibilidade com o código atual)
     @property
     def saldo_cashback(self):
-        """ Retorna o saldo total de cashback do cliente. """
         saldo = self.cashbackmovimento_set.aggregate(total=Sum('valor'))['total']
-        return saldo if saldo is not None else 0.00
+        return saldo if saldo is not None else self.saldo_cashback_db
 
     @property
     def divida_total(self):
-        """ Retorna a soma de todas as dívidas pendentes do cliente. """
         total = self.divida_set.filter(pago=False).aggregate(total=Sum('valor_pendente'))['total']
-        return total if total is not None else 0.00
+        return total if total is not None else self.divida_total_db
 
-    def __str__(self):
-        """ Retorna o nome completo e apelido para melhor identificação. """
-        partes = [self.nome]
-        if self.sobrenome:
-            partes.append(self.sobrenome)
-        
-        nome_completo = " ".join(partes)
-        
-        if self.apelido:
-            return f"{nome_completo} ({self.apelido})"
-        return nome_completo
 
 class Divida(models.Model):
     """
