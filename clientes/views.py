@@ -30,6 +30,13 @@ def cliente_detalhe_view(request, pk):
     Exibe informações completas de um cliente (busca no JSON).
     """
     clientes = ler_dados_json("clientes")
+
+    # 🔧 Conversão para int antes da busca
+    try:
+        pk = int(pk)
+    except ValueError:
+        return JsonResponse({"erro": "ID inválido"}, status=400)
+
     cliente = next((c for c in clientes if c.get("id") == pk), None)
 
     if not cliente:
@@ -37,6 +44,7 @@ def cliente_detalhe_view(request, pk):
 
     context = {"cliente": cliente}
     return render(request, "clientes/cliente_detalhe.html", context)
+
 
 
 # ==========================================================
