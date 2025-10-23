@@ -88,48 +88,49 @@ def salvar_venda(request):
                 movimentacao_caixa=movimentacao_caixa,
             )
 
- if cliente:
-    # --- Cashback gerado ---
-    if valor_cashback_gerado > 0:
-        CashbackMovimento.objects.create(
-            cliente=cliente,
-            tipo='G',
-            valor=valor_cashback_gerado,
-            venda_referencia=venda
-        )
-        cliente.saldo_cashback_db = (cliente.saldo_cashback_db or Decimal('0')) + valor_cashback_gerado
+            if cliente:
+                # --- Cashback gerado ---
+                if valor_cashback_gerado > 0:
+                    CashbackMovimento.objects.create(
+                        cliente=cliente,
+                        tipo='G',
+                        valor=valor_cashback_gerado,
+                        venda_referencia=venda
+                    )
+                    cliente.saldo_cashback_db = (cliente.saldo_cashback_db or Decimal('0')) + valor_cashback_gerado
 
-    # --- Cashback utilizado ---
-    if valor_cashback_utilizado > 0:
-        CashbackMovimento.objects.create(
-            cliente=cliente,
-            tipo='R',
-            valor=-valor_cashback_utilizado,
-            venda_referencia=venda
-        )
-        cliente.saldo_cashback_db = (cliente.saldo_cashback_db or Decimal('0')) - valor_cashback_utilizado
+                # --- Cashback utilizado ---
+                if valor_cashback_utilizado > 0:
+                    CashbackMovimento.objects.create(
+                        cliente=cliente,
+                        tipo='R',
+                        valor=-valor_cashback_utilizado,
+                        venda_referencia=venda
+                    )
+                    cliente.saldo_cashback_db = (cliente.saldo_cashback_db or Decimal('0')) - valor_cashback_utilizado
 
-    # --- Dívida ---
-    if status_pagamento in ['PENDENTE', 'DIVIDA'] and valor_recebido_liquido > 0:
-        Divida.objects.create(
-            cliente=cliente,
-            valor_original=valor_recebido_liquido,
-            valor_pendente=valor_recebido_liquido,
-            data_vencimento=data_vencimento
-        )
-        cliente.divida_total_db = (cliente.divida_total_db or Decimal('0')) + valor_recebido_liquido
+                # --- Dívida ---
+                if status_pagamento in ['PENDENTE', 'DIVIDA'] and valor_recebido_liquido > 0:
+                    Divida.objects.create(
+                        cliente=cliente,
+                        valor_original=valor_recebido_liquido,
+                        valor_pendente=valor_recebido_liquido,
+                        data_vencimento=data_vencimento
+                    )
+                    cliente.divida_total_db = (cliente.divida_total_db or Decimal('0')) + valor_recebido_liquido
 
-    cliente.save()
+                cliente.save()
 
-return redirect('dashboard')
+        return redirect('dashboard')
 
-except Exception as e:
-    print(f"ERRO AO SALVAR VENDA: {e}")
-    return redirect('vendas_lancar')
-
-
+    except Exception as e:
+        print(f"ERRO AO SALVAR VENDA: {e}")
+        return redirect('vendas_lancar')
 
 
+# ===================================================================
+# FUNÇÃO PARA SAÍDA (GASTOS)
+# ===================================================================
 def salvar_saida(request):
     """Processa o POST do formulário de Saída (Gasto)."""
     try:
@@ -183,7 +184,6 @@ def salvar_saida(request):
 # ===================================================================
 @require_http_methods(["GET", "POST"])
 def lancamento_vendas_view(request):
-
     if request.method == 'POST':
         tipo_lancamento = request.POST.get('tipo_lancamento')
 
