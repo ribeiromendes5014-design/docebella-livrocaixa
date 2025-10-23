@@ -88,7 +88,7 @@ def salvar_venda(request):
                 movimentacao_caixa=movimentacao_caixa,
             )
 
-   if cliente:
+ if cliente:
     # --- Cashback gerado ---
     if valor_cashback_gerado > 0:
         CashbackMovimento.objects.create(
@@ -121,13 +121,12 @@ def salvar_venda(request):
 
     cliente.save()
 
+return redirect('dashboard')
 
+except Exception as e:
+    print(f"ERRO AO SALVAR VENDA: {e}")
+    return redirect('vendas_lancar')
 
-        return redirect('dashboard')
-
-    except Exception as e:  # 👈 Repare que agora está DENTRO da função
-        print(f"ERRO AO SALVAR VENDA: {e}")
-        return redirect('vendas_lancar')
 
 
 
