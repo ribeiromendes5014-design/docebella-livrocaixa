@@ -81,11 +81,14 @@ WSGI_APPLICATION = 'project_settings.wsgi.application'
 # ==============================================================================
 # DATABASE (CORRIGIDO PARA SQLite LOCAL)
 # ==============================================================================
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3', 
-        'NAME': BASE_DIR / 'db.sqlite3',        
-    }
+    'default': dj_database_url.config(
+        default='postgresql://banco_fluxo_user:irqAZZKbezY12UrhR3Fga22R7T4vQbXp@dpg-d3t8ol24d50c73d5kh6g-a.oregon-postgres.render.com/banco_fluxo',
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
 
 # ==============================================================================
