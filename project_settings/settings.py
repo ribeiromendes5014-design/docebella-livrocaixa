@@ -133,7 +133,7 @@ if not DEBUG:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Redireciona o usuário para o Dashboard após o login
-LOGIN_REDIRECT_URL = '/' 
+LOGIN_URL = '/accounts/login/'
 
 # Redireciona para o Dashboard após o logout
 LOGOUT_REDIRECT_URL = '/'
