@@ -1,10 +1,12 @@
 /** @type {import('tailwindcss').Config} */
+const path = require("path");
+
 module.exports = {
   content: [
-    "./templates/**/*.html",
-    "./**/templates/**/*.html",
-    "./**/*.html",
-    "./static/**/*.js",
+    path.join(__dirname, "templates/**/*.html"),
+    path.join(__dirname, "**/templates/**/*.html"),
+    path.join(__dirname, "static/**/*.js"),
+    path.join(__dirname, "static/**/*.css"),
   ],
   theme: {
     extend: {
@@ -17,7 +19,7 @@ module.exports = {
         secondary: "#facc15",
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        sans: ["Inter", "ui-sans-serif", "system-ui"],
       },
       boxShadow: {
         soft: "0 4px 14px rgba(0,0,0,0.08)",
