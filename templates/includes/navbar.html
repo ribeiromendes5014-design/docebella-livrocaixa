@@ -26,7 +26,12 @@
                     <a class="nav-link" href="{% url 'relatorios_mensais' %}">Relatórios Financeiros</a>
                 </li>
 
-                </ul>
+                <!-- 🚀 Nova aba adicionada -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'precificacao' %}">Precificação</a>
+                </li>
+
+            </ul>
             
             <ul class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}
@@ -46,7 +51,6 @@
                 </li>
                 {% endif %}
             </ul>
-            
         </div>
     </div>
 </nav>
