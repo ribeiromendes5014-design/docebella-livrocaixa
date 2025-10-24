@@ -1,19 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: [
+  content: [
     "./templates/**/*.html",
-    "./**/templates/**/*.html",
+    "./templates/**/*.js",
     "./static/**/*.js",
-    "./core/**/*.html",
-    "./clientes/**/*.html",
-    "./financeiro/**/*.html",
-    "./vendas/**/*.html",
   ],
   theme: {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#2563eb", // Azul principal
+          DEFAULT: "#2563eb",
           light: "#3b82f6",
           dark: "#1e40af",
         },
@@ -27,6 +23,6 @@ module.exports = {
       },
     },
   },
-  darkMode: "class", // Ativa modo escuro com class="dark"
+  darkMode: "class",
   plugins: [],
 };
