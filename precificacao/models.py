@@ -8,7 +8,7 @@ class Produto(models.Model):
     custos_extras = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Custos Extras (R$)")
     margem_lucro = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, verbose_name="Margem de Lucro (%)")
     valor_sugerido = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Valor Final Sugerido (R$)")
-    criado_em = models.DateTimeField(default=timezone.now)
+    criado_em = models.DateTimeField(auto_now_add=True)
 
     @property
     def custo_total(self):
