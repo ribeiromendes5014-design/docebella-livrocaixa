@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Precificação de Produtos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>🧮 Precificação de Produtos</h2>
+
+    <form method="POST" class="row g-3 mt-3">
+        {% csrf_token %}
+        <div class="col-md-3">
+            <label class="form-label">Nome do Produto</label>
+            <input type="text" name="nome" class="form-control" required>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Quantidade</label>
+            <input type="number" name="quantidade" class="form-control" value="1" required>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Valor Pago (R$)</label>
+            <input type="number" step="0.01" name="valor_pago" class="form-control" required>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Custos Extras (R$)</label>
+            <input type="number" step="0.01" name="custo_extra" class="form-control" value="0">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Margem de Lucro (%)</label>
+            <input type="number" step="0.01" name="margem_lucro" class="form-control" placeholder="ou informe o preço">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Valor Final Sugerido (R$)</label>
+            <input type="number" step="0.01" name="valor_sugerido" class="form-control" placeholder="ou informe a margem">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-success w-100">Adicionar</button>
+        </div>
+    </form>
+
+    <hr class="my-4">
+
+    <h4>📅 Produtos Cadastrados no Mês</h4>
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Qtd</th>
+                <th>Custo Unitário (R$)</th>
+                <th>Custo Extra (R$)</th>
+                <th>Custo Total (R$)</th>
+                <th>Preço Final (R$)</th>
+                <th>Lucro (%)</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in produtos %}
+            <tr>
+                <td>{{ p.nome }}</td>
+                <td>{{ p.quantidade }}</td>
+                <td>{{ p.valor_pago }}</td>
+                <td>{{ p.custo_extra }}</td>
+                <td>{{ p.custo_total }}</td>
+                <td>{{ p.valor_final }}</td>
+                <td>{{ p.margem_lucro|floatformat:2 }}</td>
+                <td>{{ p.created_at|date:"d/m/Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center">Nenhum produto cadastrado ainda neste mês.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
