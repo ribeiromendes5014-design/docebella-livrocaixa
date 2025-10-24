@@ -1,3 +1,4 @@
+cat > tailwind.config.js << 'EOF'
 /** @type {import('tailwindcss').Config} */
 const path = require("path");
 
@@ -29,3 +30,4 @@ module.exports = {
   darkMode: "class",
   plugins: [],
 };
+EOF
