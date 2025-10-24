@@ -62,7 +62,7 @@
                 <td>{{ p.custo_total }}</td>
                 <td>{{ p.valor_final }}</td>
                 <td>{{ p.margem_lucro|floatformat:2 }}</td>
-                <td>{{ p.created_at|date:"d/m/Y" }}</td>
+                <td>{{ p.criado_em|date:"d/m/Y" }}</td>
             </tr>
             {% empty %}
             <tr><td colspan="8" class="text-center">Nenhum produto cadastrado ainda neste mês.</td></tr>
