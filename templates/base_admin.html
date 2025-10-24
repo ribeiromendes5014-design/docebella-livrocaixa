@@ -7,22 +7,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Dashboard{% endblock %}</title>
 
-  <!-- Tailwind -->
-  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <!-- ✅ CSS do AdminOne -->
+  <link rel="stylesheet" href="{% static 'adminone/css/main.css' %}">
 
   <!-- Favicon -->
   <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}"/>
   <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}"/>
   <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}"/>
-
 </head>
 <body>
 
 <div id="app">
 
+  <!-- Navbar -->
   {% include 'partials/navbar.html' %}
+
+  <!-- Sidebar -->
   {% include 'partials/sidebar.html' %}
 
+  <!-- Breadcrumb -->
   <section class="is-title-bar">
     <div class="flex flex-col md:flex-row items-center justify-between space-y-6 md:space-y-0">
       {% block breadcrumb %}
@@ -34,19 +37,21 @@
     </div>
   </section>
 
-  <!-- 🔹 CONTEÚDO PRINCIPAL DINÂMICO -->
+  <!-- Conteúdo principal -->
   <section class="section main-section">
     {% block content %}
     <!-- As páginas filhas vão injetar o conteúdo aqui -->
     {% endblock %}
   </section>
 
+  <!-- Rodapé -->
   {% include 'partials/footer.html' %}
 
 </div>
 
-<!-- Scripts -->
-<script src="{% static 'js/main.js' %}"></script>
+<!-- ✅ Scripts do AdminOne -->
+<script src="{% static 'adminone/js/main.min.js' %}"></script>
+<script src="{% static 'adminone/js/chart.sample.min.js' %}"></script>
 
 </body>
 </html>
