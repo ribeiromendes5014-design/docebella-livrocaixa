@@ -7,16 +7,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Dashboard{% endblock %}</title>
 
-  <!-- ✅ CSS do AdminOne -->
+  <!-- ✅ Tailwind compilado localmente -->
+  <link rel="stylesheet" href="{% static 'css/output.css' %}">
+
+  <!-- ✅ CSS original do AdminOne -->
   <link rel="stylesheet" href="{% static 'adminone/css/main.css' %}">
 
   <!-- Favicon -->
   <link rel="apple-touch-icon" sizes="180x180" href="{% static 'adminone/apple-touch-icon.png' %}"/>
   <link rel="icon" type="image/png" sizes="32x32" href="{% static 'adminone/favicon-32x32.png' %}"/>
- <link rel="icon" type="image/png" sizes="16x16" href="{% static 'adminone/favicon-16x16.png' %}"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'adminone/favicon-16x16.png' %}"/>
 </head>
-<body>
 
+<body>
 <div id="app">
 
   <!-- Navbar -->
@@ -40,18 +43,16 @@
   <!-- Conteúdo principal -->
   <section class="section main-section">
     {% block content %}
-    <!-- As páginas filhas vão injetar o conteúdo aqui -->
+    <!-- As páginas filhas injetam conteúdo aqui -->
     {% endblock %}
   </section>
 
   <!-- Rodapé -->
   {% include 'partials/footer.html' %}
-
 </div>
 
 <!-- ✅ Scripts do AdminOne -->
 <script src="{% static 'adminone/js/main.min.js' %}"></script>
 <script src="{% static 'adminone/js/chart.sample.min.js' %}"></script>
-
 </body>
 </html>
