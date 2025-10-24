@@ -8,7 +8,7 @@ def precificacao_view(request):
 
     # --- FILTRA APENAS OS PRODUTOS DO MÊS ATUAL ---
     hoje = timezone.now()
-    produtos = produtos.filter(created_at__year=hoje.year, created_at__month=hoje.month)
+    produtos = produtos.filter(criado_em__year=hoje.year, criado_em__month=hoje.month)
 
     if request.method == "POST":
         nome = request.POST.get('nome')
