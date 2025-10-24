@@ -55,36 +55,45 @@
     <hr class="my-4">
 
     <h4>📅 Produtos Cadastrados no Mês</h4>
-    <table class="table table-striped mt-3">
-        <thead>
-            <tr>
-                <th>Produto</th>
-                <th>Qtd</th>
-                <th>Custo Unitário (R$)</th>
-                <th>Custo Extra (R$)</th>
-                <th>Custo Total (R$)</th>
-                <th>Preço Final (R$)</th>
-                <th>Lucro (%)</th>
-                <th>Data</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for p in produtos %}
-            <tr>
-                <td>{{ p.nome }}</td>
-                <td>{{ p.quantidade }}</td>
-                <td>{{ p.valor_pago }}</td>
-                <td>{{ p.custos_extras }}</td>
-                <td>{{ p.custo_total }}</td>
-                <td>{{ p.valor_sugerido }}</td>
-                <td>{{ p.margem_lucro|floatformat:2 }}</td>
-                <td>{{ p.criado_em|date:"d/m/Y" }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="8" class="text-center">Nenhum produto cadastrado ainda neste mês.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<table class="table table-striped mt-3 align-middle">
+  <thead>
+    <tr>
+      <th>Produto</th>
+      <th>Qtd</th>
+      <th>Custo Unitário (R$)</th>
+      <th>Custo Extra (R$)</th>
+      <th>Custo Total (R$)</th>
+      <th>Preço Final (R$)</th>
+      <th>Lucro (%)</th>
+      <th>Data</th>
+      <th class="text-center">Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in produtos %}
+    <tr>
+      <td>{{ p.nome }}</td>
+      <td>{{ p.quantidade }}</td>
+      <td>{{ p.valor_pago }}</td>
+      <td>{{ p.custos_extras }}</td>
+      <td>{{ p.custo_total }}</td>
+      <td>{{ p.valor_sugerido }}</td>
+      <td>{{ p.margem_lucro|floatformat:2 }}</td>
+      <td>{{ p.criado_em|date:"d/m/Y" }}</td>
+      <td class="text-center">
+        <a href="{% url 'editar_produto' p.id %}" class="btn btn-sm btn-primary" title="Editar">✏️</a>
+        <a href="{% url 'excluir_produto' p.id %}" class="btn btn-sm btn-danger" title="Excluir"
+           onclick="return confirm('Tem certeza que deseja excluir este produto?')">🗑️</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="9" class="text-center">Nenhum produto cadastrado ainda neste mês.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 </div>
 {% endblock %}
 
