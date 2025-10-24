@@ -5,11 +5,13 @@ from financeiro.models import Movimentacao, Categoria
 from django.db.models import Sum
 from django.db.models.functions import TruncMonth
 from datetime import date, timedelta
+from datetime import datetime
 import calendar
 from django.db.models import F
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
+
 
 
 # ===================================================================
