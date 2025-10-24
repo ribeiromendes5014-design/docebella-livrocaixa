@@ -44,7 +44,9 @@ INSTALLED_APPS = [
     'clientes',
     'financeiro',
     'vendas',
+    'precificacao',  
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
