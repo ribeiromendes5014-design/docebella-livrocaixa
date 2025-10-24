@@ -1,13 +1,10 @@
-cat > tailwind.config.js << 'EOF'
 /** @type {import('tailwindcss').Config} */
-const path = require("path");
-
 module.exports = {
   content: [
-    path.join(__dirname, "templates/**/*.html"),
-    path.join(__dirname, "**/templates/**/*.html"),
-    path.join(__dirname, "static/**/*.js"),
-    path.join(__dirname, "static/**/*.css"),
+    "./templates/**/*.html",
+    "./**/templates/**/*.html",
+    "./static/**/*.js",
+    "./static/**/*.css",
   ],
   theme: {
     extend: {
@@ -30,4 +27,3 @@ module.exports = {
   darkMode: "class",
   plugins: [],
 };
-EOF
