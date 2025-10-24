@@ -3,9 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}Painel de Gestão{% endblock %}</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  {% load static %}
+  <!-- CSS compilado pelo Tailwind -->
+  <link href="{% static 'css/output.css' %}" rel="stylesheet">
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition duration-300">
   <!-- Top Navbar -->
   <header class="flex justify-between items-center bg-white dark:bg-gray-800 shadow p-4">
@@ -43,8 +49,8 @@
     </main>
   </div>
 
+  <!-- Script para modo escuro -->
   <script>
-    // Dark Mode Toggle
     const btn = document.getElementById('toggleTheme');
     btn.addEventListener('click', () => {
       document.documentElement.classList.toggle('dark');
