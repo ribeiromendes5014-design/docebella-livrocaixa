@@ -7,19 +7,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Dashboard{% endblock %}</title>
 
-    <!-- ✅ CSS original do AdminOne -->
+  <!-- ✅ CSS do AdminOne (vem primeiro) -->
   <link rel="stylesheet" href="{% static 'adminone/css/main.css' %}">
-  
-  <!-- ✅ Tailwind compilado localmente -->
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
-  <!-- Favicon -->
+  <!-- ✅ Tailwind compilado localmente (vem DEPOIS, para sobrescrever o AdminOne)
+       O ?v=5 força o navegador a buscar a versão mais recente -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=5">
+
+  <!-- ✅ Favicon -->
   <link rel="apple-touch-icon" sizes="180x180" href="{% static 'adminone/apple-touch-icon.png' %}"/>
   <link rel="icon" type="image/png" sizes="32x32" href="{% static 'adminone/favicon-32x32.png' %}"/>
   <link rel="icon" type="image/png" sizes="16x16" href="{% static 'adminone/favicon-16x16.png' %}"/>
 </head>
 
-<body>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-all">
 <div id="app">
 
   <!-- Navbar -->
@@ -32,9 +33,10 @@
   <section class="is-title-bar">
     <div class="flex flex-col md:flex-row items-center justify-between space-y-6 md:space-y-0">
       {% block breadcrumb %}
-      <ul>
+      <ul class="flex items-center space-x-2 text-gray-500 text-sm">
         <li>Admin</li>
-        <li>Dashboard</li>
+        <li>/</li>
+        <li class="font-semibold text-gray-700">Dashboard</li>
       </ul>
       {% endblock %}
     </div>
