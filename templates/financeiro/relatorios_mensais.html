@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Relatórios Financeiros{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">📈 Relatórios Detalhados e Crescimento</h1>
+        
+        <div class="card mb-5">
+            <div class="card-header bg-success text-white">
+                Resumo de {{ data_inicio }} a {{ data_fim }}
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h4 class="text-success">ENTRADAS</h4>
+                        <h2>R$ {{ entradas_periodo|floatformat:2 }}</h2>
+                    </div>
+                    <div class="col-md-4">
+                        <h4 class="text-danger">SAÍDAS</h4>
+                        <h2>R$ {{ saidas_periodo|floatformat:2 }}</h2>
+                    </div>
+                    <div class="col-md-4">
+                        <h4>SALDO</h4>
+                        <h2 class="{% if saldo_periodo >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            R$ {{ saldo_periodo|floatformat:2 }}
+                        </h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mt-5">Filtro Detalhado por Período</h3>
+        <form method="GET" class="mb-5 p-3 border rounded">
+            <div class="row align-items-end">
+                <div class="col-md-4 mb-3">
+                    <label for="id_mes_inicio" class="form-label">Mês Início</label>
+                    <input type="date" name="mes_inicio" id="id_mes_inicio" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="id_mes_fim" class="form-label">Mês Fim</label>
+                    <input type="date" name="mes_fim" id="id_mes_fim" class="form-control" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <button type="submit" class="btn btn-primary w-100">Aplicar Filtro</button>
+                </div>
+            </div>
+        </form>
+        
+        <hr>
+
+        <h3 class="mt-5">Gráfico de Crescimento de Vendas (Últimos 12 Meses)</h3>
+        <div class="p-3 border rounded bg-light">
+            <canvas id="vendasChart" style="max-height: 400px;"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Converte os dados JSON passados pelo Django para JavaScript
+    const vendasData = JSON.parse('{{ dados_grafico_json|safe }}');
+    const labels = vendasData.map(item => item.mes);
+    const valores = vendasData.map(item => item.valor);
+
+    const ctx = document.getElementById('vendasChart').getContext('2d');
+    const vendasChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total de Vendas (R$)',
+                data: valores,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
