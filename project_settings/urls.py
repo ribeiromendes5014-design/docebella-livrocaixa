@@ -5,12 +5,19 @@ from core.views import dashboard_view
 
 urlpatterns = [
     # Rotas de Autenticação (Login e Logout)
-    path('accounts/', include('django.contrib.auth.urls')), # NOVO: Inclui URLs como 'login', 'logout', 'password_change', etc.
-    
-    path('', dashboard_view, name='dashboard'), 
+    path('accounts/', include('django.contrib.auth.urls')),
+
+    # Página inicial (Dashboard)
+    path('', dashboard_view, name='dashboard'),
+
+    # Painel admin
     path('admin/', admin.site.urls),
-    
-    path('vendas/', include('vendas.urls')),       
-    path('clientes/', include('clientes.urls')),   
-    path('financeiro/', include('financeiro.urls')), # Certifique-se de que o arquivo urls.py foi criado no app financeiro
+
+    # Apps principais
+    path('vendas/', include('vendas.urls')),
+    path('clientes/', include('clientes.urls')),
+    path('financeiro/', include('financeiro.urls')),
+
+    # 🆕 Novo app de precificação
+    path('precificacao/', include('precificacao.urls')),
 ]
