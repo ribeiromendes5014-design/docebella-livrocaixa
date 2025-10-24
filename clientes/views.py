@@ -7,6 +7,9 @@ from django.contrib import messages
 from .models import Cliente
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
+from vendas.models import Venda
+from clientes.models import CashbackMovimento
+
 
 
 # ==========================================================
@@ -37,17 +40,21 @@ def excluir_cliente(request, cliente_id):
 # 3. DETALHE DO CLIENTE (usa banco)
 # ==========================================================
 def cliente_detalhe_view(request, pk):
-    """
-    Exibe informações completas de um cliente (busca no banco PostgreSQL).
-    """
     cliente = get_object_or_404(Cliente, pk=pk)
+
+    # Busca o histórico de compras e de cashback
+    vendas = Venda.objects.filter(cliente=cliente).order_by('-data_venda')
+    movimentacoes_cashback = CashbackMovimento.objects.filter(cliente=cliente).order_by('-id')
 
     context = {
         "cliente": cliente,
         "saldo_cashback": cliente.saldo_cashback,
         "divida_total": cliente.divida_total,
+        "vendas": vendas,
+        "movimentacoes_cashback": movimentacoes_cashback,
     }
     return render(request, "clientes/cliente_detalhe.html", context)
+
 
 
 # ==========================================================
