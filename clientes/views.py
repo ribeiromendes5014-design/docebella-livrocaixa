@@ -39,21 +39,32 @@ def excluir_cliente(request, cliente_id):
 # ==========================================================
 # 3. DETALHE DO CLIENTE (usa banco)
 # ==========================================================
+from vendas.models import Venda
+from clientes.models import CashbackMovimento
+
 def cliente_detalhe_view(request, pk):
+    """
+    Exibe informações completas de um cliente (busca no banco PostgreSQL),
+    incluindo histórico de compras e movimentações de cashback.
+    """
     cliente = get_object_or_404(Cliente, pk=pk)
 
-    # Busca o histórico de compras e de cashback
-    vendas = Venda.objects.filter(cliente=cliente).order_by('-data_venda')
-    movimentacoes_cashback = CashbackMovimento.objects.filter(cliente=cliente).order_by('-id')
+    # Histórico de compras
+    historico_compras = Venda.objects.filter(cliente=cliente).order_by('-data_venda')
+
+    # Movimentações de cashback
+    movimentos_cashback = CashbackMovimento.objects.filter(cliente=cliente).order_by('-data_movimento')
 
     context = {
         "cliente": cliente,
         "saldo_cashback": cliente.saldo_cashback,
         "divida_total": cliente.divida_total,
-        "vendas": vendas,
-        "movimentacoes_cashback": movimentacoes_cashback,
+        "historico_compras": historico_compras,
+        "movimentos_cashback": movimentos_cashback,
     }
+
     return render(request, "clientes/cliente_detalhe.html", context)
+
 
 
 
