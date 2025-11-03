@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        
+        <h1 class="mb-4 text-danger">⚠️ {{ titulo }}</h1>
+        
+        <div class="card shadow-sm mb-5">
+            <div class="card-header bg-danger text-white">
+                Confirmação de Exclusão
+            </div>
+            <div class="card-body">
+                
+                <p class="lead">
+                    Você tem certeza que deseja **excluir permanentemente** esta movimentação?
+                </p>
+                
+                <div class="alert alert-warning">
+                    <p class="mb-1"><strong>ID:</strong> #{{ movimentacao.pk }}</p>
+                    <p class="mb-1"><strong>Descrição:</strong> {{ movimentacao.descricao }}</p>
+                    <p class="mb-1"><strong>Valor:</strong> R$ {{ movimentacao.valor|floatformat:2 }}</p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'relatorios_mensais' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> Confirmar Exclusão
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

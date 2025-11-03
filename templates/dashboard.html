@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Resumo{% endblock %}
+
+{% block content %}
+    <h1>Bem-vindo ao Dashboard!</h1>
+    <p>O sistema está pronto. Você pode acessar o <a href="{% url 'admin:index' %}">Painel Admin</a> para cadastrar categorias e produtos.</p>
+    <p>Acesse <a href="{% url 'vendas_lancar' %}">Lançar Venda</a> para testar o formulário.</p>
+{% endblock %}
