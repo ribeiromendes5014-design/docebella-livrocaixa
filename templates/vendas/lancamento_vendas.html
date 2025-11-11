@@ -1,0 +1,585 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lançamento lancamento_vendas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h1 class="mb-4">Novo Lançamento</h1>
+
+        <div class="mb-4">
+            <label for="tipo_lancamento_selector" class="form-label">Escolha o Tipo de Lançamento</label>
+            <select class="form-select form-select-lg" id="tipo_lancamento_selector">
+                <option value="ENTRADA" selected>Entrada (Venda)</option>
+                <option value="SAIDA">Saída (Gasto)</option>
+            </select>
+        </div>
+        
+        <form id="formUnificado" method="POST" action="{% url 'vendas_lancar' %}">
+            {% csrf_token %}
+            <input type="hidden" name="tipo_lancamento" id="tipo_lancamento_hidden" value="ENTRADA"> 
+
+            
+            <div id="form_entrada">
+                
+                <h3 class="mb-3">Detalhes da Venda</h3>
+
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">1. Cliente e Histórico</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="id_cliente_input" class="form-label">Nome do Cliente / ID</label>
+                            <input type="text" class="form-control" id="id_cliente_input" placeholder="Digite o nome ou ID">
+                            <input type="hidden" name="cliente_fornecedor" id="id_cliente_hidden"> 
+                            <small class="form-text text-muted" id="cliente-busca-status">Aguardando busca...</small>
+                        </div>
+                        
+                        <div id="feedback-cliente" class="alert alert-info" style="display:none;">
+                            <p>Cliente: <strong id="feedback-nome"></strong></p>
+                            <p>Cashback Disponível: <strong id="feedback-cashback" class="text-success"></strong></p>
+                            <p>Dívidas em Aberto: <strong id="feedback-divida" class="text-danger"></strong></p>
+                            <div id="opcoes-cliente"></div>
+                        </div>
+                        
+                        <div id="feedback-novo-cliente" class="mt-3" style="display:none;">
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalCadastroRapido">
+                                + Cadastrar Cliente e Continuar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header bg-secondary text-white">2. Detalhes da Venda e Pagamento</div>
+                    <div class="card-body">
+                        
+                        <div class="mb-3">
+                            <label for="id_data_venda" class="form-label">Data e Hora da Venda *</label>
+                            <input type="datetime-local" class="form-control" id="id_data_venda" name="data_venda" required value="{{ data_venda_default }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_valor_total" class="form-label">Valor Total da Venda</label>
+                            <input type="text" inputmode="decimal" class="form-control" id="id_valor_total" name="valor_total" required value="0.00">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_cashback_a_receber" class="form-label text-primary">Cashback a Receber (3% da Venda)</label>
+                            <input type="text" class="form-control" id="id_cashback_a_receber" name="valor_cashback_gerado" value="0.00" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_cashback_utilizado" class="form-label">Valor de Cashback Resgatado</label>
+                            <input type="text" inputmode="decimal" class="form-control" id="id_cashback_utilizado" name="valor_cashback_utilizado" value="0.00" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_valor_final" class="form-label">Valor Final a Pagar (R$) (Total - Resgate)</label>
+                            <input type="text" class="form-control" id="id_valor_final" name="valor_final_a_pagar" readonly value="0.00">
+                        </div>
+
+                        <!-- ⭐️ NOVO: Interruptor para habilitar parcelamento ⭐️ -->
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="id_venda_parcelada_toggle">
+                            <label class="form-check-label" for="id_venda_parcelada_toggle">Habilitar parcelamento para esta venda?</label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_forma_pagamento" class="form-label">Forma de Pagamento</label>
+                            <select class="form-select" id="id_forma_pagamento" name="forma_pagamento" required>
+                                <option value="">Selecione a Forma</option>
+                                {% for forma in formas_pagamento %}
+                                    <option value="{{ forma.id }}">{{ forma.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3" id="container_status_pagamento">
+                            <label for="id_status_pagamento" class="form-label">Status do Pagamento</label>
+                            <select class="form-select" id="id_status_pagamento" name="status_pagamento" required>
+                                <option value="PAGO">Pago (Entrada Imediata)</option>
+                                <option value="PENDENTE">Pendente (Conta a Receber, com data)</option>
+                                <option value="DIVIDA">Dívida (Sem data prevista)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="campo-data-vencimento" style="display:none;">
+                            <label for="id_data_vencimento" class="form-label">Data de Vencimento</label>
+                            <input type="date" class="form-control" id="id_data_vencimento" name="data_vencimento">
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ⭐️ NOVO: Card de Parcelamento (inicialmente oculto) ⭐️ -->
+                <div class="card mb-3" id="card_parcelamento" style="display: none;">
+                    <div class="card-header bg-info text-white">3. Detalhes do Parcelamento</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_numero_parcelas" class="form-label">Número de Parcelas *</label>
+                                <input type="number" class="form-control" id="id_numero_parcelas" name="numero_parcelas" min="1" value="1">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_data_primeira_parcela" class="form-label">Vencimento da 1ª Parcela *</label>
+                                <input type="date" class="form-control" id="id_data_primeira_parcela" name="data_primeira_parcela">
+                            </div>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="id_incluir_entrada" name="incluir_entrada">
+                            <label class="form-check-label" for="id_incluir_entrada">
+                                Incluir entrada? (A primeira parcela será paga hoje)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="form_saida" style="display:none;">
+                <h3 class="mb-3">Detalhes do Gasto</h3>
+
+                <div class="card mb-3">
+                    <div class="card-header bg-danger text-white">Informações da Saída</div>
+                    <div class="card-body">
+                        
+                        <div class="mb-3">
+                            <label for="id_valor_saida" class="form-label">Valor do Gasto *</label>
+                            <input type="text" inputmode="decimal" class="form-control" id="id_valor_saida" name="valor_saida" required placeholder="Ex: 150.00">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_data_lancamento_saida" class="form-label">Data do Gasto *</label>
+                            <input type="date" class="form-control" id="id_data_lancamento_saida" name="data_lancamento_saida" required value="{{ data_atual }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_descricao_saida" class="form-label">Descrição do Gasto</label>
+                            <input type="text" class="form-control" id="id_descricao_saida" name="descricao_saida" maxlength="255" required placeholder="Ex: Pagamento de Aluguel">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_categoria_saida" class="form-label">Categoria (Onde foi gasto) *</label>
+                            <select class="form-select" id="id_categoria_saida" name="categoria_saida" required>
+                                <option value="">Selecione a Categoria de Saída</option>
+                                {% for categoria in categorias_saida %}
+                                    <option value="{{ categoria.pk }}">{{ categoria.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_forma_pagamento_saida" class="form-label">Forma de Pagamento *</label>
+                            <select class="form-select" id="id_forma_pagamento_saida" name="forma_pagamento_saida" required>
+                                <option value="">Selecione a Forma</option>
+                                {% for forma in formas_pagamento %}
+                                    <option value="{{ forma.pk }}">{{ forma.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_status_saida" class="form-label">Status do Pagamento *</label>
+                            <select class="form-select" id="id_status_saida" name="status_saida" required>
+                                <option value="PAGO">Pago (Saída Imediata)</option>
+                                <option value="PENDENTE">Pendente (Conta a Pagar)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="campo-data-vencimento-saida" style="display:none;">
+                            <label for="id_data_vencimento_saida" class="form-label">Data de Vencimento</label>
+                            <input type="date" class="form-control" id="id_data_vencimento_saida" name="data_vencimento_saida">
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-lg mt-3 w-100" id="btn_salvar">Registrar</button>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCadastroRapido" tabindex="-1" aria-labelledby="modalCadastroRapidoLabel" aria-hidden="true">
+    {% include 'clientes/modal_cadastro_rapido.html' %} 
+</div>
+
+{% endblock content %} 
+
+{% block extra_js %}
+<script>
+    // URL para a sua view de busca AJAX
+    const searchUrl = "{% url 'vendas_buscar_cliente_ajax' %}";
+    const cadastroUrl = "{% url 'clientes_cadastro_rapido_ajax' %}";
+    
+    // --- ELEMENTOS DO DOM ---
+    const selector = document.getElementById('tipo_lancamento_selector');
+    const formEntrada = document.getElementById('form_entrada');
+    const formSaida = document.getElementById('form_saida');
+    const tipoLancamentoHidden = document.getElementById('tipo_lancamento_hidden');
+    const btnSalvar = document.getElementById('btn_salvar');
+
+    // Elementos da ENTRADA (Venda)
+    const clienteInput = document.getElementById('id_cliente_input');
+    const clienteHidden = document.getElementById('id_cliente_hidden');
+    const feedbackArea = document.getElementById('feedback-cliente');
+    const novoClienteFeedback = document.getElementById('feedback-novo-cliente');
+    const statusPagamentoEntrada = document.getElementById('id_status_pagamento');
+    const campoDataVencimentoEntrada = document.getElementById('campo-data-vencimento');
+    const clienteBuscaStatus = document.getElementById('cliente-busca-status'); 
+
+    // Elementos de Cálculo da ENTRADA
+    const valorTotalInput = document.getElementById('id_valor_total');
+    const cashbackReceberInput = document.getElementById('id_cashback_a_receber');
+    const cashbackUtilizadoInput = document.getElementById('id_cashback_utilizado');
+    const valorFinalInput = document.getElementById('id_valor_final');
+    
+    // ⭐️ NOVO: Elementos do Parcelamento
+    const vendaParceladaToggle = document.getElementById('id_venda_parcelada_toggle');
+    const formaPagamentoSelect = document.getElementById('id_forma_pagamento');
+    const cardParcelamento = document.getElementById('card_parcelamento');
+    const numeroParcelasInput = document.getElementById('id_numero_parcelas');
+    const dataPrimeiraParcelaInput = document.getElementById('id_data_primeira_parcela');
+
+    // Elementos da SAÍDA (Gasto)
+    const valorSaidaInput = document.getElementById('id_valor_saida');
+    const statusPagamentoSaida = document.getElementById('id_status_saida');
+    const campoDataVencimentoSaida = document.getElementById('campo-data-vencimento-saida');
+
+    // Outros elementos (exigidos no seu código original)
+    // NOTE: Se 'btnSalvarCliente' estiver dentro do modal, ele só será acessível após o DOM ser carregado.
+    // Vamos usar a constante do Modal
+    const modalCadastroRapido = new bootstrap.Modal(document.getElementById('modalCadastroRapido'));
+
+    // --- REGRAS DE NEGÓCIO ---
+    const TAXA_CASHBACK = 0.03; 
+    const VALOR_MINIMO_RESGATE = 20.00;
+    let debounceTimer;
+
+    // =============================================================
+    // ⭐️ START: VARIÁVEIS E FUNÇÕES DE REQUIRED
+    // =============================================================
+
+    const requiredEntradaFields = [
+        document.getElementById('id_data_venda'),
+        document.getElementById('id_valor_total'),
+        document.getElementById('id_forma_pagamento'),
+        document.getElementById('id_status_pagamento'),
+    ];
+
+    const requiredSaidaFields = [
+        document.getElementById('id_valor_saida'),
+        document.getElementById('id_data_lancamento_saida'),
+        document.getElementById('id_descricao_saida'),
+        document.getElementById('id_categoria_saida'),
+        document.getElementById('id_forma_pagamento_saida'),
+        document.getElementById('id_status_saida'),
+    ];
+
+    /** Alterna o atributo 'required' nos campos para evitar a validação HTML5 em campos ocultos. */
+    function toggleRequiredFields(fields, isRequired) {
+        fields.forEach(field => {
+            if (field) {
+                field.required = isRequired;
+            }
+        });
+    }
+
+    // =============================================================
+    // END: VARIÁVEIS E FUNÇÕES DE REQUIRED
+    // =============================================================
+
+
+    // =============================================================
+    // FUNÇÕES DE BUSCA E CADASTRO (AJAX)
+    // =============================================================
+    
+    function updateClientFeedback(data, query) {
+        clienteHidden.value = '';
+        feedbackArea.style.display = 'none';
+        novoClienteFeedback.style.display = 'none';
+        
+        if (data.cliente_encontrado) {
+            // Cliente encontrado
+            feedbackArea.style.display = 'block';
+            clienteBuscaStatus.textContent = 'Cliente encontrado! Verifique os detalhes abaixo.';
+            document.getElementById('feedback-nome').textContent = data.nome;
+            document.getElementById('feedback-cashback').textContent = `R$ ${data.cashback.toFixed(2)}`;
+            document.getElementById('feedback-divida').textContent = `R$ ${data.divida.toFixed(2)}`;
+            clienteHidden.value = data.id; 
+            
+            // Adiciona a opção de resgate (se aplicável)
+            const opcoesDiv = document.getElementById('opcoes-cliente');
+            opcoesDiv.innerHTML = '';
+            if (data.cashback >= VALOR_MINIMO_RESGATE) {
+                const resgateBtn = document.createElement('button');
+                resgateBtn.textContent = 'Aplicar Resgate de Cashback';
+                resgateBtn.classList.add('btn', 'btn-sm', 'btn-warning', 'mt-2');
+                resgateBtn.type = 'button';
+                resgateBtn.onclick = () => resgatarCashback(data.cashback); 
+                opcoesDiv.appendChild(resgateBtn);
+            }
+
+        } else if (query && query.length > 2) {
+            // Cliente não encontrado - Sugerir cadastro
+            novoClienteFeedback.style.display = 'block';
+            clienteBuscaStatus.textContent = `Nenhum cliente encontrado para "${query}".`;
+        } else {
+            clienteBuscaStatus.textContent = 'Aguardando busca... (mínimo 3 caracteres)';
+        }
+    }
+
+
+    function searchClient(query) {
+        if (!query || query.length < 3) {
+            updateClientFeedback({}, query); 
+            return;
+        }
+
+        clienteBuscaStatus.textContent = 'Buscando...';
+        
+        fetch(searchUrl + `?q=${encodeURIComponent(query)}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest' 
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            updateClientFeedback(data, query);
+        })
+        .catch(error => {
+            console.error('Erro na busca AJAX:', error);
+            clienteBuscaStatus.textContent = 'Erro ao buscar cliente. Verifique o console.';
+            updateClientFeedback({}, query);
+        });
+    }
+
+    function salvarClienteRapido(event) {
+        // ⭐️ CRÍTICO: Previne o envio padrão do formulário
+        event.preventDefault(); 
+        
+        const form = document.getElementById('formCadastroRapidoCliente');
+        const formData = new FormData(form);
+        const feedbackDiv = document.getElementById('cadastro-feedback');
+
+        // 1. Obtém o token CSRF
+        const csrfToken = formData.get('csrfmiddlewaretoken');
+        
+        // 2. Limpa o feedback
+        if(feedbackDiv) {
+            feedbackDiv.style.display = 'none';
+            feedbackDiv.textContent = '';
+        }
+
+        // 3. Envia os dados via Fetch API
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                // Tentativa de ler o erro JSON do Django ou mostrar erro genérico
+                return response.json().then(err => { throw new Error(err.erro || `Erro HTTP ${response.status}`); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.sucesso) {
+                alert(`Cliente ${data.nome} cadastrado com sucesso!`);
+                
+                // 4. Preenche os campos do formulário principal
+                clienteHidden.value = data.id;
+                clienteInput.value = data.nome;
+
+                // 5. Fecha o modal do Bootstrap
+                modalCadastroRapido.hide();
+
+                // 6. Atualiza o painel de feedback da busca (simulando uma busca de sucesso)
+                updateClientFeedback({
+                    cliente_encontrado: true,
+                    id: data.id,
+                    nome: data.nome,
+                    cashback: data.saldo_cashback, 
+                    divida: data.divida_total     
+                }, data.nome);
+                
+            } else {
+                // Exibe erro de validação do lado do servidor (se não for erro de HTTP)
+                if(feedbackDiv) {
+                    feedbackDiv.textContent = data.erro || "Erro desconhecido no cadastro.";
+                    feedbackDiv.style.display = 'block';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erro no POST AJAX:', error);
+            if(feedbackDiv) {
+                feedbackDiv.textContent = error.message || "Erro de rede ou servidor ao cadastrar cliente.";
+                feedbackDiv.style.display = 'block';
+            }
+        });
+    }
+
+    // =============================================================
+    // FUNÇÕES DE CÁLCULO E RESGATE
+    // =============================================================
+    function calcularCashbackAReceber() {
+        const valorTotalVenda = parseFloat(valorTotalInput.value) || 0;
+        const cashbackReceber = valorTotalVenda * TAXA_CASHBACK;
+        cashbackReceberInput.value = cashbackReceber.toFixed(2);
+    }
+
+    function calcularValorFinal() {
+        calcularCashbackAReceber();
+        const valorTotalVenda = parseFloat(valorTotalInput.value) || 0;
+        const cashbackUtilizado = parseFloat(cashbackUtilizadoInput.value) || 0;
+        const valorFinal = valorTotalVenda - cashbackUtilizado;
+        valorFinalInput.value = Math.max(0, valorFinal).toFixed(2);
+    }
+    
+    function resgatarCashback(saldoDisponivel) {
+        const valorTotalVenda = parseFloat(valorTotalInput.value) || 0;
+        if (saldoDisponivel < VALOR_MINIMO_RESGATE) {
+            alert(`Não é possível resgatar. Saldo mínimo exigido é R$ ${VALOR_MINIMO_RESGATE.toFixed(2)}.`);
+            return;
+        }
+        const limiteMaximoVenda = valorTotalVenda * 0.50;
+        let valorResgate = Math.min(saldoDisponivel, limiteMaximoVenda, valorTotalVenda);
+        if (valorResgate < 0.01) {
+             alert("O valor da venda é muito baixo para aplicar resgate com base na regra de 50%.");
+             return;
+        }
+        cashbackUtilizadoInput.value = valorResgate.toFixed(2);
+        calcularValorFinal();
+        alert(`Resgate aplicado! Valor: R$ ${valorResgate.toFixed(2)} (Limite: 50% da venda).`);
+    }
+
+    // =============================================================
+    // LÓGICA DE ALTERNÂNCIA (ENTRADA / SAÍDA)
+    // =============================================================
+    selector.addEventListener('change', (e) => {
+        const tipo = e.target.value;
+        tipoLancamentoHidden.value = tipo;
+
+        if (tipo === 'ENTRADA') {
+            formEntrada.style.display = 'block';
+            formSaida.style.display = 'none';
+            btnSalvar.classList.remove('btn-danger');
+            btnSalvar.classList.add('btn-success');
+            
+            toggleRequiredFields(requiredEntradaFields, true);
+            toggleRequiredFields(requiredSaidaFields, false);
+            
+        } else { // SAIDA
+            formEntrada.style.display = 'none';
+            formSaida.style.display = 'block';
+            btnSalvar.classList.remove('btn-success');
+            btnSalvar.classList.add('btn-danger');
+            
+            toggleRequiredFields(requiredEntradaFields, false);
+            toggleRequiredFields(requiredSaidaFields, true);
+        }
+    });
+
+    // Lógicas para campos de Vencimento
+    statusPagamentoEntrada.addEventListener('change', (e) => {
+        campoDataVencimentoEntrada.style.display = (e.target.value === 'PENDENTE') ? 'block' : 'none';
+    });
+    statusPagamentoSaida.addEventListener('change', (e) => {
+        campoDataVencimentoSaida.style.display = (e.target.value === 'PENDENTE') ? 'block' : 'none';
+    });
+
+    // ⭐️ ALTERADO: Lógica para exibir/ocultar o card de parcelamento com base no interruptor
+    vendaParceladaToggle.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const statusContainer = document.getElementById('container_status_pagamento');
+
+        if (isChecked) {
+            cardParcelamento.style.display = 'block';
+            numeroParcelasInput.required = true;
+            dataPrimeiraParcelaInput.required = true;
+            statusContainer.style.display = 'none'; // Oculta o status de pagamento único
+        } else {
+            cardParcelamento.style.display = 'none';
+            numeroParcelasInput.required = false;
+            dataPrimeiraParcelaInput.required = false;
+            statusContainer.style.display = 'block'; // Mostra o status de pagamento único
+        }
+    });
+    // ✅ Corrige valores e mantém o CSRF válido ao enviar o formulário
+document.getElementById('formUnificado').addEventListener('submit', function (e) {
+    e.preventDefault(); // evita envio antes da limpeza
+
+    const form = this;
+    const campoValor = document.getElementById('id_valor_total');
+    const campoCashback = document.getElementById('id_cashback_utilizado');
+
+    if (campoValor && campoValor.value) {
+        campoValor.value = campoValor.value.replace(/[^\d,.-]/g, '').replace(',', '.');
+    }
+    if (campoCashback && campoCashback.value) {
+        campoCashback.value = campoCashback.value.replace(/[^\d,.-]/g, '').replace(',', '.');
+    }
+
+    // ✅ envia o formulário logo em seguida (CSRF token permanece intacto)
+    setTimeout(() => form.submit(), 100);
+});
+
+
+    // =============================================================
+    // INICIALIZAÇÃO E EVENTOS
+    // =============================================================
+
+    // Evento de Debounce no campo de Cliente (Entrada)
+    clienteInput.addEventListener('input', (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            searchClient(e.target.value);
+        }, 500); 
+    });
+
+    // Evento principal para calcular valores (Entrada)
+    valorTotalInput.addEventListener('input', calcularValorFinal);
+    
+    // Inicializa a página e o tratamento de eventos
+    document.addEventListener('DOMContentLoaded', () => {
+        // Inicializa o modo ENTRADA
+        document.getElementById('tipo_lancamento_selector').value = 'ENTRADA';
+        document.getElementById('form_entrada').style.display = 'block';
+        document.getElementById('form_saida').style.display = 'none';
+        
+        // Configura os campos REQUIRED na inicialização
+        toggleRequiredFields(requiredEntradaFields, true);
+        toggleRequiredFields(requiredSaidaFields, false);
+        
+        calcularValorFinal();
+
+        // ⭐️ Adiciona o listener para o formulário de cadastro rápido
+        const formCadastro = document.getElementById('formCadastroRapidoCliente');
+        if (formCadastro) {
+            formCadastro.addEventListener('submit', salvarClienteRapido);
+        }
+
+        // ⭐️ CRÍTICO: Preenche o nome da busca no campo do modal antes de abrir
+        const modalElement = document.getElementById('modalCadastroRapido');
+        modalElement.addEventListener('show.bs.modal', function (event) {
+            const nomeDigitado = clienteInput.value;
+            const nomeCampoModal = document.getElementById('id_nome_cadastro');
+            if (nomeCampoModal && nomeDigitado) {
+                nomeCampoModal.value = nomeDigitado;
+            }
+        });
+    });
+
+</script>
+{% endblock extra_js %}

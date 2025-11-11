@@ -1,0 +1,56 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        
+        <a class="navbar-brand" href="{% url 'dashboard' %}">💰 Meu Fluxo de Caixa</a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-house-door-fill me-1"></i> Dashboard</a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'vendas_lancar' %}"><i class="bi bi-plus-circle-fill me-1"></i> Lançar Venda</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'clientes_lista' %}"><i class="bi bi-people-fill me-1"></i> Clientes</a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'relatorios_mensais' %}"><i class="bi bi-bar-chart-line-fill me-1"></i> Relatórios</a>
+                </li>
+
+                <!-- 🚀 Nova aba adicionada -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'precificacao' %}"><i class="bi bi-tags-fill me-1"></i> Precificação</a>
+                </li>
+
+            </ul>
+            
+            <ul class="navbar-nav ms-auto">
+                {% if user.is_authenticated %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">                        
+                        <i class="bi bi-person-circle me-1"></i> Olá, {{ user.username }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLink">
+                        <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="bi bi-shield-lock-fill me-2"></i> Admin</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-2"></i> Sair</a></li>
+                    </ul>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'login' %}"><i class="bi bi-box-arrow-in-right me-1"></i> Login</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
