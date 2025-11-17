@@ -1,0 +1,17 @@
+# Ambiente virtual
+venv/
+__pycache__/
+
+# Node.js
+node_modules/
+
+# Arquivos temporários
+*.pyc
+*.pyo
+*.log
+
+# Banco local
+db.sqlite3
+
+# Cache e build
+staticfiles/

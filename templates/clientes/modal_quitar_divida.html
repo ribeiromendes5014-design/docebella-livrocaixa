@@ -1,0 +1,38 @@
+<div class="modal-dialog">
+    <div class="modal-content">
+        <form id="formQuitarDivida" method="POST" action="{% url 'clientes_quitar_divida' cliente.pk %}">
+            {% csrf_token %}
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalQuitarDividaLabel">
+                    Quitar Dívida de {{ cliente.nome }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>Dívida atual: <strong class="text-danger">R$ {{ cliente.divida_total|floatformat:2 }}</strong></p>
+                <hr>
+                <div class="mb-3">
+                    <label for="id_valor_pago" class="form-label">Valor a Pagar *</label>
+                    <input type="text" inputmode="decimal" class="form-control" id="id_valor_pago" name="valor" value="{{ cliente.divida_total|floatformat:2 }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_forma_pagamento_divida" class="form-label">Forma de Pagamento *</label>
+                    <select class="form-select" id="id_forma_pagamento_divida" name="forma_pagamento" required>
+                        <option value="">Selecione...</option>
+                        {% for forma in formas_pagamento %}
+                            <option value="{{ forma.id }}">{{ forma.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-success">Confirmar Pagamento</button>
+            </div>
+        </form>
+    </div>
+</div>

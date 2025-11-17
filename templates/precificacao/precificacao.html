@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}Precificação de Produtos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>📊 Precificação de Produtos</h2>
+
+    <form id="form-precificacao" method="POST">
+      {% csrf_token %}
+      <div class="row mb-3">
+        <div class="col">
+          <label>Nome do Produto</label>
+          <input type="text" name="nome" id="nome" class="form-control" required>
+        </div>
+        <div class="col">
+          <label>Quantidade</label>
+          <input type="number" name="quantidade" id="quantidade" class="form-control" value="1" min="1" required>
+        </div>
+        <div class="col">
+          <label>Valor Pago (R$)</label>
+          <input type="number" step="0.01" name="valor_pago" id="valor_pago" class="form-control" required>
+        </div>
+        <div class="col">
+          <label>Custos Extras (R$)</label>
+          <input type="number" step="0.01" name="custos_extras" id="custos_extras" class="form-control" value="0">
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col">
+          <label>Margem de Lucro (%)</label>
+          <input type="number" step="0.01" name="margem_lucro" id="margem_lucro" class="form-control" placeholder="ou informe um valor abaixo">
+        </div>
+        <div class="col">
+          <label>Valor Final Sugerido (R$)</label>
+          <input type="number" step="0.01" name="valor_sugerido" id="valor_sugerido" class="form-control" placeholder="ou informe a margem acima">
+        </div>
+      </div>
+
+      <div class="mb-3 text-center">
+        <button type="submit" class="btn btn-success">Adicionar</button>
+      </div>
+
+      <hr>
+
+      <!-- Resumo automático -->
+      <div class="card p-3 bg-light" id="resumo-container" style="display:none;">
+        <h5>🧾 Resumo da Precificação</h5>
+        <p><strong>Custo Total:</strong> R$ <span id="resumo_custo_total">0.00</span></p>
+        <p><strong>Preço Final:</strong> R$ <span id="resumo_preco_final">0.00</span></p>
+        <p><strong>Lucro Estimado:</strong> R$ <span id="resumo_lucro">0.00</span> (<span id="resumo_percentual">0</span>%)</p>
+      </div>
+    </form>
+
+    <hr class="my-4">
+
+    <h4>📅 Produtos Cadastrados no Mês</h4>
+<table class="table table-striped mt-3 align-middle">
+  <thead>
+    <tr>
+      <th>Produto</th>
+      <th>Qtd</th>
+      <th>Custo Unitário (R$)</th>
+      <th>Custo Extra (R$)</th>
+      <th>Custo Total (R$)</th>
+      <th>Preço Final (R$)</th>
+      <th>Lucro (%)</th>
+      <th>Data</th>
+      <th class="text-center">Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in produtos %}
+    <tr>
+      <td>{{ p.nome }}</td>
+      <td>{{ p.quantidade }}</td>
+      <td>{{ p.valor_pago }}</td>
+      <td>{{ p.custos_extras }}</td>
+      <td>{{ p.custo_total }}</td>
+      <td>{{ p.valor_sugerido }}</td>
+      <td>{{ p.margem_lucro|floatformat:2 }}</td>
+      <td>{{ p.criado_em|date:"d/m/Y" }}</td>
+      <td class="text-center">
+        <a href="{% url 'editar_produto' p.id %}" class="btn btn-sm btn-primary" title="Editar">✏️</a>
+        <a href="{% url 'excluir_produto' p.id %}" class="btn btn-sm btn-danger" title="Excluir"
+           onclick="return confirm('Tem certeza que deseja excluir este produto?')">🗑️</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="9" class="text-center">Nenhum produto cadastrado ainda neste mês.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const qtd = document.getElementById('quantidade');
+  const valorPago = document.getElementById('valor_pago');
+  const custosExtras = document.getElementById('custos_extras');
+  const margemLucro = document.getElementById('margem_lucro');
+  const valorSugerido = document.getElementById('valor_sugerido');
+  const resumoContainer = document.getElementById('resumo-container');
+
+  const custoTotalEl = document.getElementById('resumo_custo_total');
+  const precoFinalEl = document.getElementById('resumo_preco_final');
+  const lucroEl = document.getElementById('resumo_lucro');
+  const percentualEl = document.getElementById('resumo_percentual');
+
+  function atualizarResumo() {
+    const qtdVal = parseFloat(qtd.value) || 0;
+    const valorPagoVal = parseFloat(valorPago.value) || 0;
+    const custoExtraVal = parseFloat(custosExtras.value) || 0;
+    const margemVal = parseFloat(margemLucro.value) || 0;
+    const valorSugeridoVal = parseFloat(valorSugerido.value) || 0;
+
+    const custoTotal = (valorPagoVal + custoExtraVal) * qtdVal;
+    let precoFinal = 0;
+    let lucro = 0;
+    let perc = 0;
+
+    if (valorSugeridoVal > 0) {
+      precoFinal = valorSugeridoVal;
+      lucro = precoFinal - custoTotal;
+      perc = (lucro / custoTotal) * 100;
+    } else if (margemVal > 0) {
+      precoFinal = custoTotal * (1 + margemVal / 100);
+      lucro = precoFinal - custoTotal;
+      perc = margemVal;
+    }
+
+    if (custoTotal > 0) {
+      resumoContainer.style.display = "block";
+      custoTotalEl.textContent = custoTotal.toFixed(2);
+      precoFinalEl.textContent = precoFinal.toFixed(2);
+      lucroEl.textContent = lucro.toFixed(2);
+      percentualEl.textContent = perc.toFixed(2);
+    } else {
+      resumoContainer.style.display = "none";
+    }
+  }
+
+  [qtd, valorPago, custosExtras, margemLucro, valorSugerido].forEach(el => {
+    el.addEventListener('input', atualizarResumo);
+  });
+});
+</script>
+{% endblock %}

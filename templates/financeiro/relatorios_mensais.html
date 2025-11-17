@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Relatórios Financeiros{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">📈 Relatórios Detalhados e Crescimento</h1>
+        
+        <div class="card mb-5">
+            <div class="card-header bg-success text-white">
+                Resumo de {{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h4 class="text-success">ENTRADAS</h4>
+                        <h2>R$ {{ entradas_periodo|floatformat:2 }}</h2>
+                    </div>
+                    <div class="col-md-4">
+                        <h4 class="text-danger">SAÍDAS</h4>
+                        <h2>R$ {{ saidas_periodo|floatformat:2 }}</h2>
+                    </div>
+                    <div class="col-md-4">
+                        <h4>SALDO</h4>
+                        <h2 class="{% if saldo_periodo >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            R$ {{ saldo_periodo|floatformat:2 }}
+                        </h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mt-5">Filtro Detalhado por Período</h3>
+        <form method="GET" class="mb-5 p-3 border rounded">
+            <div class="row align-items-end">
+                <div class="col-md-4 mb-3">
+                    <label for="id_mes_inicio" class="form-label">Mês Início</label>
+                    <input type="date" name="mes_inicio" id="id_mes_inicio" class="form-control" value="{{ data_inicio }}" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="id_mes_fim" class="form-label">Mês Fim</label>
+                    <input type="date" name="mes_fim" id="id_mes_fim" class="form-control" value="{{ data_fim }}" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <button type="submit" class="btn btn-primary w-100">Aplicar Filtro</button>
+                </div>
+            </div>
+        </form>
+        
+        <hr>
+
+        <h3 class="mt-5">Gráfico de Crescimento de Vendas (Últimos 12 Meses)</h3>
+        <div class="p-3 border rounded bg-light mb-5">
+            <canvas id="vendasChart" style="max-height: 400px;"></canvas>
+        </div>
+        
+        <hr>
+        
+        <h3 class="mt-5">🧾 Lançamentos Detalhados do Período</h3>
+        <p class="text-muted">Lista completa de todas as movimentações de caixa de **{{ data_inicio|date:"d/m/Y" }} a {{ data_fim|date:"d/m/Y" }}**.</p>
+
+        <div class="table-responsive mb-5">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Cliente/Fornecedor</th>
+                        <th class="text-end">Valor (R$)</th>
+                        <th>Categoria</th>
+                        <th>Forma Pgto</th>
+                        <th>Vencimento</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in movimentacoes_do_mes %}
+                    <tr>
+                        <td>
+                            {% if mov.tipo == 'E' %}
+                                <span class="badge bg-success text-white fw-bold">{{ mov.get_tipo_display }}</span>
+                            {% else %}
+                                <span class="badge bg-danger text-white fw-bold">{{ mov.get_tipo_display }}</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td>{{ mov.data_lancamento|date:"d/m/Y" }}</td>
+                        
+                        <td>{{ mov.descricao }}</td>
+                        
+                        <td>
+                            {% if mov.cliente_fornecedor %}
+                                {{ mov.cliente_fornecedor.nome }} 
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        
+                        <td class="text-end">
+                            <strong>R$ {{ mov.valor|floatformat:2 }}</strong>
+                        </td>
+                        
+                        <td>{{ mov.categoria.nome }}</td>
+                        
+                        <td>
+                            {% if mov.forma_pagamento %}{{ mov.forma_pagamento.nome }}{% else %}-{% endif %}
+                        </td>
+
+                        <td>
+                            {% if mov.data_vencimento %}
+                                {{ mov.data_vencimento|date:"d/m/Y" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        
+                        <td>
+                            {% if mov.status == 'PAGO' %}
+                                <span class="badge bg-primary">{{ mov.get_status_display }}</span>
+                            {% elif mov.status == 'PENDENTE' %}
+                                <span class="badge bg-warning text-dark">{{ mov.get_status_display }}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{{ mov.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td>
+                            <a href="{% url 'editar_movimentacao' mov.pk %}" class="btn btn-sm btn-info" title="Editar"><i class="fas fa-edit"></i></a>
+                            <a href="{% url 'excluir_movimentacao' mov.pk %}" class="btn btn-sm btn-danger" title="Excluir"><i class="fas fa-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-4">Nenhuma movimentação encontrada no período.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Converte os dados JSON passados pelo Django para JavaScript
+    const vendasData = JSON.parse('{{ dados_grafico_json|safe }}');
+    const labels = vendasData.map(item => item.mes);
+    const valores = vendasData.map(item => item.valor);
+
+    const ctx = document.getElementById('vendasChart').getContext('2d');
+    const vendasChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total de Vendas (R$)',
+                data: valores,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>{% block title %}Meu Fluxo de Caixa{% endblock %}</title>
+
+    <!-- 🎨 TEMA BOOTSWATCH (LUX) -->
+    <link href="https://bootswatch.com/5/materia/bootstrap.min.css" rel="stylesheet">
+
+    <!-- 📍 ÍCONES DO BOOTSTRAP -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+    {% include 'includes/navbar.html' %} 
+    
+    <main class="container mt-4">
+        <div class="p-4 rounded-3" style="background-color: rgba(0,0,0,0.03);">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

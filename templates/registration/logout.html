@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Logout{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+    <div class="card shadow-lg mx-auto" style="max-width: 400px;">
+        <div class="card-body">
+            <h3 class="mb-3">👋 Você saiu do sistema</h3>
+            <p>Até logo! Esperamos te ver em breve.</p>
+            <a href="{% url 'login' %}" class="btn btn-primary">Entrar novamente</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
